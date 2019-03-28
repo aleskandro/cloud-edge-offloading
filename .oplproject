@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="ASCII"?><project>
+	<version>1.0</version>
+	<configs>
+		<config category="opl" default="true" name="Configuration1">
+			<ref name="model.mod" type="model">
+			</ref>
+			<ref name="scenario1.dat" type="data">
+			</ref>
+		</config>
+		<config category="opl" default="false" name="Configuration2">
+			<ref name="model.mod" type="model">
+			</ref>
+			<ref name="scenario2.dat" type="data">
+			</ref>
+		</config>
+	</configs>
+	
+</project>

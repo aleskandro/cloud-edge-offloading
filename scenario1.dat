@@ -1,0 +1,82 @@
+/*********************************************
+ * OPL 12.6.1.0 Data
+ * Author: aleskandro
+ * Creation Date: Feb 24, 2019 at 9:34:32 AM
+ *********************************************/
+ 
+ /*
+ 	1 Server 16 cpu, 16GB ram
+ 	2 Service providers
+ 	2 options per service provider
+ 	
+ 	SP1.opt1.containers = [[2, 4G], [4, 4G]]
+ 	SP1.opt1.bandwidthSaving = 100
+ 	
+ 	SP1.opt2.containers = [[4, 8G], [4, 8G]]
+ 	SP1.opt2.bandwidthSaving = 50
+ 
+ 	SP2.opt1.containers = [[2, 2G], [1, 1G]]
+ 	SP2.opt1.bandwidthSaving = 100
+ 	
+ 	SP2.opt2.containers = [[1, 1G], [1, 1G]]
+ 	SP2.opt2.bandwidthSaving = 25
+ 
+ */
+/*nbServers = 1;
+nbServiceProviders = 2;
+nbResources = 2;
+nbOptions = [2, 2];
+bandwidthSaving = [[100, 50], [100, 25]];
+nbContainers = [[2,2], [2,2]];
+requiredResources = [ // Service providers
+						[ // Service provider 1, options
+							[ // sp1, opt1, containers
+								[ // sp1, opt1, container1
+									2, // cpu
+									4096 // ram
+								],
+								[ // container2
+									4, // cpu
+									4096 // ram
+								]	
+							],
+							[ // sp1, opt2
+								[4, 8192], [4, 8192]
+							]
+						],
+						[ // sp2
+							[ // sp2, opt1
+								[2, 2048], [1, 1024]
+							],
+							[ // sp2, opt2
+								[1, 1024], [1, 1024]
+							]
+						]
+					];
+					
+availableResources = [ // Servers
+						[ // Server1
+							16, 16384
+						]
+					];
+					
+					*/
+					
+nbServers = 1;
+nbResources = 2;
+nbServiceProviders = 5;
+
+availableResources = [ [30, 30000 ]];
+nbOptions = [1, 1, 1, 1, 1];
+bandwidthSaving = [[79],[144],[72],[105],[114]];
+nbContainers = [ [1], [1], [1], [1], [1]];
+requiredResources =
+[
+	[[[12, 11773]]],
+	[[[12, 11649]]],
+	[[[10, 12233]]],
+	[[[14, 12458]]],
+	[[[14, 12201]]]
+];
+
+					

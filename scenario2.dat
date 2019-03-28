@@ -1,0 +1,43 @@
+/*********************************************
+ * OPL 12.6.1.0 Data
+ * Author: aleskandro
+ * Creation Date: Feb 24, 2019 at 9:34:32 AM
+ *********************************************/
+nbServers = 4;
+nbServiceProviders = 2;
+nbResources = 2;
+nbOptions = [3, 2];
+bandwidthSaving = [[100, 50, 200], [100, 25]];
+nbContainers = [[2,3,1], [2,2]];
+requiredResources = [ // Service providers
+						[ // Service provider 1, options
+							[ // sp1, opt1, containers
+								[ // sp1, opt1, container1
+									2, // cpu
+									4096 // ram
+								],
+								[ // container2
+									4, // cpu
+									4096 // ram
+								]	
+							],
+							[ // sp1, opt2
+								[4, 8192], [4, 8192], [2, 2048]
+							], 
+							[ [4, 8192]]
+						],
+						[ // sp2
+							[ // sp2, opt1
+								[2, 2048], [1, 1024]
+							],
+							[ // sp2, opt2
+								[1, 1024], [1, 1024]
+							]
+						]
+					];
+					
+availableResources = [ // Servers
+						[ // Server1
+							16, 16384
+						], [8, 8192], [4, 4096], [8, 8192]
+					];
