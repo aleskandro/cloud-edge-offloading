@@ -1,14 +1,15 @@
-from Generator import Generator
 import numpy.random as Random
 import numpy as np
 import math
-from NormalRandomVariable import NormalRandomVariable
-from UniformRandomVariable import UniformRandomVariable
-from ResourceDependentRandomVariable import ResourceDependentRandomVariable
-from GeneratorBwConcave import GeneratorBwConcave
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+
+from Generator.Generator import *
+from Generator.GeneratorBwConcave import *
+from Random.NormalRandomVariable import *
+from Random.UniformRandomVariable import *
+from Random.ResourceDependentRandomVariable import *
 
 Random.seed(6)
 maxCpu = 30

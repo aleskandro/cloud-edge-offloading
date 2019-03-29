@@ -1,5 +1,5 @@
 import numpy.random as Random
-from RandomVariable import RandomVariable
+from Random.RandomVariable import RandomVariable
 
 class NormalRandomVariable(RandomVariable):
     def generate(self):

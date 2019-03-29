@@ -1,4 +1,4 @@
-from Generator import Generator
+from Generator.Generator import *
 
 class GeneratorBwConcave(Generator):
     def _generateBandwidthSaving(self, optionsArray, containersArray, requiredResources, availableResources):
