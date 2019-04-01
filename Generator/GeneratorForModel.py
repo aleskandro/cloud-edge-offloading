@@ -5,7 +5,10 @@ from Generator.Generator import *
 
 
 class GeneratorForModel(Generator):
-
+    """
+    This inherits Generator and behave as a visitor for the NetworkProvider class. It's a bit tricky but it guarantees
+    the same values generated for the MIP model
+    """
     def _generateAvailableResources(self):
         np = NetworkProvider().getInstance()
         [np.addServer(self.resources[0].generate(), self.resources[1].generate()) for _ in range(self.nbServers)]
