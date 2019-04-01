@@ -15,3 +15,9 @@ class Container:
 
     def setServer(self, server):
         self.__server = server
+
+    def setRamReq(self, ram):
+        self.__ramReq = ram
+
+    def setCpuReq(self, cpu):
+        self.__cpuReq = cpu

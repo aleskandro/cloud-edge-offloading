@@ -17,6 +17,9 @@ class Option:
             ram += container.getRamReq()
         return ram
 
+    def getTotalResources(self):
+        return self.getCpuReq(), self.getRamReq()
+
     def setBandwidthSaving(self, bandwidthSaving):
         self.__bandwidthSaving = bandwidthSaving
 

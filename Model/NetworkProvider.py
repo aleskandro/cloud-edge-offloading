@@ -1,3 +1,5 @@
+import operator
+
 class NetworkProvider:
     class __NetworkProvider:
         def __init__(self):
@@ -56,7 +58,12 @@ class NetworkProvider:
 
         def getServers(self):
             return self.__servers
-
+        
+        def getTotalResources(self):
+            ret = (0, 0)
+            for server in self.__servers:
+                ret = tuple(map(operator.add, ret, (server.getTotalCpu(), server.getTotalRam()))
+            return ret
     instance = None # Can this be a private member?
     def getInstance(self):
         if (not NetworkProvider.instance):
