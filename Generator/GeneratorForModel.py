@@ -1,8 +1,14 @@
 from Model.NetworkProvider import *
+from Model.Container import *
+from Model.Option import *
+from Generator.Generator import *
+
+
 class GeneratorForModel(Generator):
+
     def _generateAvailableResources(self):
         np = NetworkProvider().getInstance()
-        [np.addServer(self.resources[0].generate(), self.resources[1].generate()) for i in range(self.nbServers)]
+        [np.addServer(self.resources[0].generate(), self.resources[1].generate()) for _ in range(self.nbServers)]
 
     def _generateOptions(self):
         np = NetworkProvider().getInstance()
@@ -16,7 +22,7 @@ class GeneratorForModel(Generator):
         for sp in np.getServiceProviders():
             for opt in sp.getOptions():
                 resources = opt.getTotalResources()
-                opt.setBandwidthSaving(self.bandwidth.generate(resources, totalResources)
+                opt.setBandwidthSaving(self.bandwidth.generate(resources, totalResources))
 
     def _generateContainers(self):
         np = NetworkProvider().getInstance()
@@ -33,9 +39,8 @@ class GeneratorForModel(Generator):
                     ct.setRamReq(self.reqResources[1].generate())
 
     def generate(self):
-        availableResources = self._generateAvailableResources()
-        options = self._generateOptions()
-        containers = self._generateContainers(options)
-        requiredResources = self._generateRequiredResources(options, containers)
-        bandwidthSaving = self._generateBandwidthSaving(options)
-
+        self._generateAvailableResources()
+        self._generateOptions()
+        self._generateContainers()
+        self._generateRequiredResources()
+        self._generateBandwidthSaving()
