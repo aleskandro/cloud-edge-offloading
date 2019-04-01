@@ -7,6 +7,8 @@ import os
 
 from Generator.Generator import *
 from Generator.GeneratorBwConcave import *
+from Generator.GeneratorForModel import *
+
 from Random.NormalRandomVariable import *
 from Random.UniformRandomVariable import *
 from Random.ResourceDependentRandomVariable import *
@@ -21,25 +23,36 @@ avgCpu = maxCpu/avgServers # Average cpu for a single server (this is the maximu
 
 avgContainers = 1
 avgServiceProviders = 5
-#avgBandwidth = 100
+# avgBandwidth = 100
 K = 1.6
 servers = UniformRandomVariable(avgServers, avgServers)
 ram = NormalRandomVariable(avgRam, 0)
 cpu = NormalRandomVariable(avgCpu, 0)
 
 serviceProviders = UniformRandomVariable(avgServiceProviders, avgServiceProviders)
-#bandwidth = NormalRandomVariable(avgBandwidth, 50)
+# bandwidth = NormalRandomVariable(avgBandwidth, 50)
 bandwidth = ResourceDependentRandomVariable(UniformRandomVariable(1,5))
 containers = UniformRandomVariable(avgContainers, avgContainers)
 
 ramReq = UniformRandomVariable(0, K * (avgRam * avgServers) / (avgContainers * avgServiceProviders))
 cpuReq = UniformRandomVariable(0, K * (avgCpu * avgServers) / (avgContainers * avgServiceProviders))
 
+
+def simpleHeuristic(maxOpt):
+    for i in range(1, maxOpt + 1):
+        options = UniformRandomVariable(i, i)
+        generator = GeneratorForModel(servers, serviceProviders,
+                                      options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq])
+        generator.generate()  # TODO make multithread by not using a singleton (can I?)
+        NetworkProvider().getInstance().makePlacement()
+        # Render the graphs as in the MIP model for bandwidth and remainingResources by options TODO
+
 def simple(maxOpt):
     for i in range(1, maxOpt + 1): 
         options = UniformRandomVariable(i, i)
-        #generator = Generator(servers, serviceProviders, options, containers, [ram, cpu], bandwidth, [ramReq, cpuReq])
+        # generator = Generator(servers, serviceProviders, options, containers, [ram, cpu], bandwidth, [ramReq, cpuReq])
         generator = GeneratorBwConcave(servers, serviceProviders, options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq])
+
         generator.generate()
         os.system("glpsol --math modelglpk.mod -d scenario.dat")
 

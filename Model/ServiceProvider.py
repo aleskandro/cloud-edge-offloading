@@ -9,7 +9,7 @@ class ServiceProvider:
         return self.__options
 
     def addOption(self, option):
-        if (not self.__defaultOption):
+        if not self.__defaultOption:
             self.setDefaultOption(option)
         self.__options.append(option)
 

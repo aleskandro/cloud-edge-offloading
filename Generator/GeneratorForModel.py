@@ -42,6 +42,7 @@ class GeneratorForModel(Generator):
                     ct.setRamReq(self.reqResources[1].generate())
 
     def generate(self):
+        NetworkProvider().getInstance().clean()
         self._generateAvailableResources()
         self._generateOptions()
         self._generateContainers()

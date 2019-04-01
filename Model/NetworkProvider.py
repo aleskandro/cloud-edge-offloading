@@ -2,9 +2,12 @@ import operator
 
 class NetworkProvider:
     class __NetworkProvider:
-        def __init__(self):
+        def clean(self):
             self.__servers = []
             self.__serviceProviders = []
+
+        def __init__(self):
+            self.clean()
 
         def addServiceProvider(self, serviceProvider):
             self.__serviceProviders.append(serviceProvider)
@@ -21,15 +24,16 @@ class NetworkProvider:
                     bestHost = server
             return bestHost
 
-        def makePlacement(self): # TODO
+        def makePlacement(self):
             convergence = False
-            while (not convergence):
+            datas = [[] for _ in self.__serviceProviders]
+            while not convergence:
                 for sp in self.__serviceProviders: # TODO multithread
                     sp.computeEfficiencies()
 
                 # Set the convergence to true by default
                 convergence = True
-
+                sp_index = 0
                 for sp in self.__serviceProviders: # Cannot be multithreaded because of placement of containers onto servers
                     opt = sp.getMostEfficientOption()
                     placement = True
@@ -48,10 +52,17 @@ class NetworkProvider:
                         if sp.getDefaultOption():
                             convergence = False
                         sp.setDefaultOption(None)
+                        datas[sp_index].append(sp.getOptions().index(sp.getDefaultOption()) + 1 if sp.getDefaultOption()
+                                               else 0)
                     else:
                         # Verify if the choosen option is the same as the previous step
                         if not sp.getDefaultOption() is opt:
                             convergence = False
+            # TODO print datas to len(sps) graphs
+            self.__print_datas(datas)
+
+        def __print_datas(self, datas):
+            pass
 
         def getServiceProviders(self):
             return self.__serviceProviders
@@ -64,7 +75,9 @@ class NetworkProvider:
             for server in self.__servers:
                 ret = tuple(map(operator.add, ret, (server.getTotalCpu(), server.getTotalRam())))
             return ret
-    instance = None # Can this be a private member?
+
+    instance = None  # Can this be a private member?
+
     def getInstance(self):
         if not NetworkProvider.instance:
             NetworkProvider.instance = self.__NetworkProvider()
