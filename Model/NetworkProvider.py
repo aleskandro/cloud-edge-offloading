@@ -1,4 +1,6 @@
 import operator
+import matplotlib.pyplot as plt
+
 
 class NetworkProvider:
     class __NetworkProvider:
@@ -18,23 +20,59 @@ class NetworkProvider:
         def __getBestHost(self, cpu, ram):
             bestHost = None
             for server in self.__servers:
-                if server.getAvailableRam() < ram or server.getAvailableCpu < cpu:
+                if server.getAvailableRam() < ram or server.getAvailableCpu() < cpu:
                     continue
                 if not bestHost or bestHost.getResidualValue() < server.getResidualValue():
                     bestHost = server
             return bestHost
 
-        def makePlacement(self):
+        def getBandwidthSaving(self):
+            ret = 0
+            for sp in self.__serviceProviders:
+                ret += sp.getDefaultOption().getBandwidthSaving() if sp.getDefaultOption() else 0
+            return ret
+
+        def getRemainingResources(self):
+            cpu = 0
+            ram = 0
+            cpu_available = 0
+            ram_available = 0
+            for server in self.__servers:
+                cpu += server.getTotalCpu()
+                ram += server.getTotalRam()
+
+            for server in self.__servers:
+                cpu_available += server.getAvailableCpu()
+                ram_available += server.getAvailableRam()
+
+            return cpu_available/cpu, ram_available/ram
+
+        def makePlacement(self, placement_id):
             convergence = False
             datas = [[] for _ in self.__serviceProviders]
-            while not convergence:
+            print(datas)
+            print("Startgin placement")
+            limit = 100
+            while not convergence and limit > 0:
+                limit -= 1
+                print("Starting iteration...")
+                print("Computing efficiencies...")
                 for sp in self.__serviceProviders: # TODO multithread
                     sp.computeEfficiencies()
 
                 # Set the convergence to true by default
                 convergence = True
                 sp_index = 0
+                # Clean the cluster
+                for sp in self.__serviceProviders:
+                    for option in sp.getOptions():
+                        for container in option.getContainers():
+                            if container.getServer():
+                                container.getServer().unplaceContainer(container)
+                # Cluster clean
+                print("Trying to make the placement for each service provider")
                 for sp in self.__serviceProviders: # Cannot be multithreaded because of placement of containers onto servers
+                    old_is_none = not sp.getDefaultOption()
                     opt = sp.getMostEfficientOption()
                     placement = True
                     for container in opt.getContainers():
@@ -52,17 +90,24 @@ class NetworkProvider:
                         if sp.getDefaultOption():
                             convergence = False
                         sp.setDefaultOption(None)
-                        datas[sp_index].append(sp.getOptions().index(sp.getDefaultOption()) + 1 if sp.getDefaultOption()
-                                               else 0)
                     else:
                         # Verify if the choosen option is the same as the previous step
                         if not sp.getDefaultOption() is opt:
                             convergence = False
-            # TODO print datas to len(sps) graphs
-            self.__print_datas(datas)
+                        sp.setDefaultOption(opt)
+                    datas[sp_index].append(sp.getOptions().index(sp.getDefaultOption()) + 1 if sp.getDefaultOption()
+                                           else 0)
+                    sp_index += 1
+            print(datas)
+            self.__print_datas(datas, placement_id)
 
-        def __print_datas(self, datas):
-            pass
+        def __print_datas(self, datas, placement_id):
+            x = range(len(datas[0]))
+            fig, axs = plt.subplots(nrows=1, ncols=1)
+            [axs.plot(x, datas[i], label="SP %d" % i) for i in range(len(datas))]
+            axs.legend(loc="best")
+            fig.savefig("results/chosen-option-per-sp-%d.png" % placement_id)
+            # TODO does a better way exist to assign id to the image?
 
         def getServiceProviders(self):
             return self.__serviceProviders

@@ -18,11 +18,17 @@ class Option:
             ram += container.getRamReq()
         return ram
 
+    def getServiceProvider(self):
+        return self.__serviceProvider
+
     def getTotalResources(self):
         return self.getCpuReq(), self.getRamReq()
 
     def setBandwidthSaving(self, bandwidthSaving):
         self.__bandwidthSaving = bandwidthSaving
+
+    def getBandwidthSaving(self):
+        return self.__bandwidthSaving
 
     def addContainer(self, container):
         self.__containers.append(container)
@@ -44,12 +50,12 @@ class Option:
         defaultSPCpuSum = 0
         defaultSPRamSum = 0
         for sp in NetworkProvider().getInstance().getServiceProviders():
-            defaultSPCpuSum += sp.getDefaultOption().getCpuReq()
-            defaultSPRamSum += sp.getDefaultOption().getRamReq()
+            if sp.getDefaultOption():
+                defaultSPCpuSum += sp.getDefaultOption().getCpuReq()
+                defaultSPRamSum += sp.getDefaultOption().getRamReq()
 
         for server in NetworkProvider().getInstance().getServers():
-           denominator += self.getCpuReq() * max((defaultSPCpuSum - server.getTotalCpu()), 0)
-           denominator += self.getRamReq() * max((defaultSPRamSum - server.getTotalRam()), 0)
-
+           denominator += self.getCpuReq() * max((defaultSPCpuSum - server.getTotalCpu()), 1) # TODO restore to 0
+           denominator += self.getRamReq() * max((defaultSPRamSum - server.getTotalRam()), 1)
         self.__efficiency = self.__bandwidthSaving / denominator
 

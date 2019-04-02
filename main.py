@@ -39,13 +39,31 @@ cpuReq = UniformRandomVariable(0, K * (avgCpu * avgServers) / (avgContainers * a
 
 
 def simpleHeuristic(maxOpt):
+    bwOpts = []
+    rrOpts = [[], []]
     for i in range(1, maxOpt + 1):
         options = UniformRandomVariable(i, i)
         generator = GeneratorForModel(servers, serviceProviders,
                                       options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq])
         generator.generate()  # TODO make multithread by not using a singleton (can I?)
-        NetworkProvider().getInstance().makePlacement()
-        # Render the graphs as in the MIP model for bandwidth and remainingResources by options TODO
+        npp = NetworkProvider().getInstance()
+        npp.makePlacement(i)
+        bwOpts.append(npp.getBandwidthSaving())
+        rrOpts[0].append(npp.getRemainingResources()[0])
+        rrOpts[1].append(npp.getRemainingResources()[1])
+
+    # TODO multiple runs error bars
+    fig, axs = plt.subplots(nrows=2, ncols=1)
+    ax = axs[0]
+    ax.set_ylim([0, math.ceil(max(bwOpts))])
+    ax.plot(range(1, len(bwOpts) + 1), bwOpts, label="Bandwidth saving")
+    ax.legend(loc="best")
+    ax = axs[1]
+    ax.plot(range(1, len(rrOpts[0]) + 1), rrOpts[0], label="CPU")
+    ax.plot(range(1, len(rrOpts[1]) + 1), rrOpts[1], label="RAM")
+    ax.legend(loc="best")
+    ax.set_ylim([0, 1])
+    fig.savefig("results/output.png")
 
 def simple(maxOpt):
     for i in range(1, maxOpt + 1): 
@@ -93,7 +111,10 @@ def grouped(runs, maxOpt):
     ax.legend(loc="best")
     ax.set_ylim([0, 1])
     fig.savefig("results/output.png")
+
 os.system("rm -rf results/*")
 #simple(200)
-grouped(20, 10)
+#grouped(20, 10)
+simpleHeuristic(10)
+
 

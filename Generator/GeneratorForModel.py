@@ -1,6 +1,8 @@
 from Model.NetworkProvider import *
 from Model.Container import *
 from Model.Option import *
+from Model.Server import *
+from Model.ServiceProvider import  *
 from Generator.Generator import *
 
 
@@ -11,7 +13,7 @@ class GeneratorForModel(Generator):
     """
     def _generateAvailableResources(self):
         np = NetworkProvider().getInstance()
-        [np.addServer(self.resources[0].generate(), self.resources[1].generate()) for _ in range(self.nbServers)]
+        [np.addServer(Server(self.resources[0].generate(), self.resources[1].generate())) for _ in range(self.nbServers)]
 
     def _generateOptions(self):
         np = NetworkProvider().getInstance()
@@ -41,8 +43,13 @@ class GeneratorForModel(Generator):
                     ct.setCpuReq(self.reqResources[0].generate())
                     ct.setRamReq(self.reqResources[1].generate())
 
+    def _generateServiceProviders(self):
+        np = NetworkProvider().getInstance()
+        [np.addServiceProvider(ServiceProvider()) for _ in range(self.nbServiceProviders)]
+
     def generate(self):
         NetworkProvider().getInstance().clean()
+        self._generateServiceProviders()
         self._generateAvailableResources()
         self._generateOptions()
         self._generateContainers()

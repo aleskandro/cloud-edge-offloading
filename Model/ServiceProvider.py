@@ -9,8 +9,6 @@ class ServiceProvider:
         return self.__options
 
     def addOption(self, option):
-        if not self.__defaultOption:
-            self.setDefaultOption(option)
         self.__options.append(option)
 
     def getDefaultOption(self):
@@ -22,14 +20,17 @@ class ServiceProvider:
     def getMostEfficientOption(self):
         mostEfficientOption = self.__defaultOption
         for option in self.__options:
-            if (mostEfficientOption.getEfficiency() < option.getEfficiency()):
+            efficiency = 0 if not mostEfficientOption else mostEfficientOption.getEfficiency()
+            if (efficiency < option.getEfficiency()):
                 mostEfficientOption = option
         return mostEfficientOption
 
-    def __ce(self, option):
+    def ce(self, option):
         option.computeEfficiency()
 
     def computeEfficiencies(self):
-        with multiprocessing.Pool(multiprocessing.cpu_count()) as p:
-            p.map(self.__ce, self.__options)
-
+        # TODO restore multiprocessing but with blocking/join
+        #with multiprocessing.Pool(multiprocessing.cpu_count()) as p:
+        #    p.map(self.ce, self.__options)
+        for opt in self.__options:
+            opt.computeEfficiency()
