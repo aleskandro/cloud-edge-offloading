@@ -1,5 +1,5 @@
 import multiprocessing
-
+import operator
 class ServiceProvider:
     def __init__(self):
         self.__options = []
@@ -34,3 +34,17 @@ class ServiceProvider:
         #    p.map(self.ce, self.__options)
         for opt in self.__options:
             opt.computeEfficiency()
+
+    def __getCandidateOptions(self):
+        subset = []
+        for opt in self.__options:
+            bs = self.__defaultOption.getBandwidthSaving() if self.__defaultOption else 0
+            if opt.getBandwidthSaving() > bs:
+                subset.append(opt)
+                opt.computeEfficiency()
+        return subset
+
+    def getBestOption(self):
+        subset = self.__getCandidateOptions()
+        if len(subset) == 0: return None
+        return max(subset, key=lambda opt: opt.getEfficiency())

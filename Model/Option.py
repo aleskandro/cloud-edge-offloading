@@ -45,17 +45,33 @@ class Option:
     def getEfficiency(self):
         return self.__efficiency
 
-    def computeEfficiency(self): # TODO multithreading as in unplaceContainers
+#    def computeEfficiency(self): # TODO multithreading as in unplaceContainers
+#        denominator = 0
+#        defaultSPCpuSum = 0
+#        defaultSPRamSum = 0
+#        for sp in NetworkProvider().getInstance().getServiceProviders():
+#            if sp.getDefaultOption():
+#                defaultSPCpuSum += sp.getDefaultOption().getCpuReq()
+#                defaultSPRamSum += sp.getDefaultOption().getRamReq()
+#
+#        for server in NetworkProvider().getInstance().getServers():
+#           denominator += self.getCpuReq() * max((defaultSPCpuSum - server.getTotalCpu()), 1) # TODO restore to 0
+#           denominator += self.getRamReq() * max((defaultSPRamSum - server.getTotalRam()), 1)
+#        self.__efficiency = self.__bandwidthSaving / denominator
+
+    def computeEfficiency(self):
+        # Return 0 if computing efficiency to jump to itself
+        if (self is self.getServiceProvider().getDefaultOption()):
+            return 0
         denominator = 0
-        defaultSPCpuSum = 0
-        defaultSPRamSum = 0
-        for sp in NetworkProvider().getInstance().getServiceProviders():
-            if sp.getDefaultOption():
-                defaultSPCpuSum += sp.getDefaultOption().getCpuReq()
-                defaultSPRamSum += sp.getDefaultOption().getRamReq()
+        numerator = self.getBandwidthSaving()
+        numerator -= self.getServiceProvider().getDefaultOption().getBandwidthSaving() if \
+            self.getServiceProvider().getDefaultOption() else 0
 
         for server in NetworkProvider().getInstance().getServers():
-           denominator += self.getCpuReq() * max((defaultSPCpuSum - server.getTotalCpu()), 1) # TODO restore to 0
-           denominator += self.getRamReq() * max((defaultSPRamSum - server.getTotalRam()), 1)
-        self.__efficiency = self.__bandwidthSaving / denominator
+            tcpu = self.getServiceProvider().getDefaultOption().getCpuReq() if self.getServiceProvider().getDefaultOption() else 0
+            tram = self.getServiceProvider().getDefaultOption().getRamReq() if self.getServiceProvider().getDefaultOption() else 0
+            denominator += (self.getCpuReq() - tcpu) * 1/server.getTotalCpu()
+            denominator += (self.getRamReq() - tram) * 1/server.getTotalRam()
 
+        self.__efficiency = numerator / denominator

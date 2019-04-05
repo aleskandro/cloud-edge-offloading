@@ -47,59 +47,115 @@ class NetworkProvider:
 
             return cpu_available/cpu, ram_available/ram
 
-        def makePlacement(self, placement_id):
-            convergence = False
-            datas = [[] for _ in self.__serviceProviders]
-            print(datas)
-            print("Startgin placement")
-            limit = 100
-            while not convergence and limit > 0:
-                limit -= 1
-                print("Starting iteration...")
-                print("Computing efficiencies...")
-                for sp in self.__serviceProviders: # TODO multithread
-                    sp.computeEfficiencies()
+        def __clean_cluster(self):
+            # Clean the cluster
+            for sp in self.__serviceProviders:
+                for option in sp.getOptions():
+                    for container in option.getContainers():
+                        if container.getServer():
+                            container.getServer().unplaceContainer(container)
+            # Cluster clean
 
-                # Set the convergence to true by default
-                convergence = True
-                sp_index = 0
-                # Clean the cluster
+        def makePlacement(self, placement_id):
+            fitting = True
+            datas = [[] for _ in self.__serviceProviders]
+            self.__clean_cluster()
+            limit = 100
+            while(fitting and limit > 0):
+                limit-=1
+                options = []
                 for sp in self.__serviceProviders:
-                    for option in sp.getOptions():
-                        for container in option.getContainers():
-                            if container.getServer():
-                                container.getServer().unplaceContainer(container)
-                # Cluster clean
-                print("Trying to make the placement for each service provider")
-                for sp in self.__serviceProviders: # Cannot be multithreaded because of placement of containers onto servers
-                    old_is_none = not sp.getDefaultOption()
-                    opt = sp.getMostEfficientOption()
-                    placement = True
-                    for container in opt.getContainers():
+                    opt = sp.getBestOption()
+                    if opt:
+                        options.append(opt)
+                candidateOption = max(options, key=lambda x: x.getEfficiency())
+                if not candidateOption:
+                    break
+                # Unplace old containers if options for the selected sp has changed
+                option_has_changed = candidateOption.getServiceProvider().getDefaultOption() != candidateOption
+                placement = True
+                if option_has_changed:
+                    # Unplace old option from the cluster
+                    if candidateOption.getServiceProvider().getDefaultOption():
+                        for container in candidateOption.getServiceProvider().getDefaultOption().getContainers():
+                            container.getServer().unplaceContainer(container)
+                    # Try to place new option on the cluster
+                    for container in candidateOption.getContainers():
                         host = self.__getBestHost(container.getCpuReq(), container.getRamReq())
                         if host:
                             host.placeContainer(container)
                         else:
                             placement = False
-                    # Discard the request if any container was not placed in the cluster
-                    if not placement:
-                        for container in opt.getContainers():
-                            if container.getServer():
-                                container.getServer().unplaceContainer(container)
-                        # Make the convergence to False if in the previous step there was a default option set for this sp
-                        if sp.getDefaultOption():
-                            convergence = False
-                        sp.setDefaultOption(None)
-                    else:
-                        # Verify if the choosen option is the same as the previous step
-                        if not sp.getDefaultOption() is opt:
-                            convergence = False
-                        sp.setDefaultOption(opt)
+                # Discard the request if any container was not placed in the cluster
+                if not placement:
+                    for container in candidateOption.getContainers():
+                        if container.getServer():
+                            container.getServer().unplaceContainer(container)
+                    # Restore old option (Warning: maybe the same placement as the previous one is not guaranteed)
+                    if candidateOption.getServiceProvider().getDefaultOption():
+                        for container in candidateOption.getServiceProvider().getDefaultOption().getContainers():
+                            host = self.__getBestHost(container.getCpuReq(), container.getRamReq())
+                            if host:
+                                host.placeContainer(container)
+                    # Algorithm end
+                    fitting = False
+                else:
+                    candidateOption.getServiceProvider().setDefaultOption(candidateOption)
+
+                sp_index = 0
+                for sp in self.__serviceProviders:
                     datas[sp_index].append(sp.getOptions().index(sp.getDefaultOption()) + 1 if sp.getDefaultOption()
-                                           else 0)
+                        else 0)
                     sp_index += 1
             print(datas)
             self.__print_datas(datas, placement_id)
+#        def makePlacement(self, placement_id):
+#            convergence = False
+#            datas = [[] for _ in self.__serviceProviders]
+#            print(datas)
+#            print("Startgin placement")
+#            limit = 100
+#            while not convergence and limit > 0:
+#                limit -= 1
+#                print("Starting iteration...")
+#                print("Computing efficiencies...")
+#                for sp in self.__serviceProviders: # TODO multithread
+#                    sp.computeEfficiencies()
+#
+#                # Set the convergence to true by default
+#                convergence = True
+#                sp_index = 0
+#                self.__clean_cluster()
+#                print("Trying to make the placement for each service provider")
+#                for sp in self.__serviceProviders: # Cannot be multithreaded because of placement of containers onto servers
+#                    old_is_none = not sp.getDefaultOption()
+#                    opt = sp.getMostEfficientOption()
+#                    placement = True
+#                    for container in opt.getContainers():
+#                        host = self.__getBestHost(container.getCpuReq(), container.getRamReq())
+#                        if host:
+#                            host.placeContainer(container)
+#                        else:
+#                            placement = False
+#                    # Discard the request if any container was not placed in the cluster
+#                    if not placement:
+#                        for container in opt.getContainers():
+#                            if container.getServer():
+#                                container.getServer().unplaceContainer(container)
+#                        # Make the convergence to False if in the previous step there was a default option set for this sp
+#                        if sp.getDefaultOption():
+#                            convergence = False
+#                        sp.setDefaultOption(None)
+#                    else:
+#                        # Verify if the choosen option is the same as the previous step
+#                        if not sp.getDefaultOption() is opt:
+#                            convergence = False
+#                        sp.setDefaultOption(opt)
+#                    datas[sp_index].append(sp.getOptions().index(sp.getDefaultOption()) + 1 if sp.getDefaultOption()
+#                                           else 0)
+#                    sp_index += 1
+#            print(datas)
+#            self.__print_datas(datas, placement_id)
 
         def __print_datas(self, datas, placement_id):
             x = range(len(datas[0]))
