@@ -68,7 +68,7 @@ class NetworkProvider:
                     opt = sp.getBestOption()
                     if opt:
                         options.append(opt)
-                candidateOption = max(options, key=lambda x: x.getEfficiency())
+                candidateOption = max(options, key=lambda x: x.getEfficiency()) if len(options) > 0 else None
                 if not candidateOption:
                     break
                 # Unplace old containers if options for the selected sp has changed
