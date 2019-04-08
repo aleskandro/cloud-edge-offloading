@@ -3,3 +3,4 @@ __pycache__/
 .*.sw[op]
 scenario.dat
 venv/
+.idea/workspace.xml
