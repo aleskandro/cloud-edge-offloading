@@ -38,8 +38,6 @@ ramReq = UniformRandomVariable(0, K * (avgRam * avgServers) / (avgContainers * a
 cpuReq = UniformRandomVariable(0, K * (avgCpu * avgServers) / (avgContainers * avgServiceProviders))
 
 def simpleHeuristic(maxOpt, make_graph=True):
-    #bwOpts = []
-    #rrOpts = [[], []]
     bwOpts2 = pd.DataFrame(columns=["BandwidthSaving", "Options"])
     rrOpts2 = pd.DataFrame(columns=["Options", "CPU", "RAM"])
     for i in range(1, maxOpt + 1):
@@ -49,26 +47,10 @@ def simpleHeuristic(maxOpt, make_graph=True):
         generator.generate()  # TODO make multithread by not using a singleton (can I?)
         npp = NetworkProvider().getInstance()
         npp.makePlacement(i)
-        #bwOpts.append(npp.getBandwidthSaving())
         bwOpts2.loc[len(bwOpts2)] = {"Options": i, "BandwidthSaving": npp.getBandwidthSaving()}
         rrOpts2.loc[len(rrOpts2)] = {"Options": i, "CPU": npp.getRemainingResources()[0], "RAM": npp.getRemainingResources()[1]}
-        #rrOpts[0].append(npp.getRemainingResources()[0])
-        #rrOpts[1].append(npp.getRemainingResources()[1])
     if make_graph:
         makeGraph(bwOpts2, rrOpts2)
-    return bwOpts2, rrOpts2
-    # TODO multiple runs error bars
-#    fig, axs = plt.subplots(nrows=2, ncols=1)
-#    ax = axs[0]
-#    ax.set_ylim([0, math.ceil(max(bwOpts))])
-#    ax.plot(range(1, len(bwOpts) + 1), bwOpts, label="Bandwidth saving")
-#    ax.legend(loc="best")
-#    ax = axs[1]
-#    ax.plot(range(1, len(rrOpts[0]) + 1), rrOpts[0], label="CPU")
-#    ax.plot(range(1, len(rrOpts[1]) + 1), rrOpts[1], label="RAM")
-#    ax.legend(loc="best")
-#    ax.set_ylim([0, 1])
-#    fig.savefig("results/output.png")
 
 def simple(maxOpt):
     for i in range(1, maxOpt + 1): 
