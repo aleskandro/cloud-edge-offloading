@@ -16,12 +16,12 @@ from Random.ResourceDependentRandomVariable import *
 Random.seed(6)
 maxCpu = 30
 maxRam = 30000
-avgServers = 1
+avgServers = 8
 
 avgRam = maxRam/avgServers # Average ram for a single server (this is the maximum amount of ram that a container can get)
 avgCpu = maxCpu/avgServers # Average cpu for a single server (this is the maximum amount of cpu that a container can get)
 
-avgContainers = 1
+avgContainers = 8
 avgServiceProviders = 5
 # avgBandwidth = 100
 K = 1.6
@@ -51,6 +51,7 @@ def simpleHeuristic(maxOpt, make_graph=True):
         rrOpts2.loc[len(rrOpts2)] = {"Options": i, "CPU": npp.getRemainingResources()[0], "RAM": npp.getRemainingResources()[1]}
     if make_graph:
         makeGraph(bwOpts2, rrOpts2)
+    return bwOpts2, rrOpts2
 
 def simple(maxOpt):
     for i in range(1, maxOpt + 1): 
@@ -94,15 +95,38 @@ def makeGraph(bwOpts, rrOpts):
     ax.set_ylim([0, 1])
     fig.savefig("results/output.png")
 
-def grouped(runs, maxOpt):
+def makeGraphTogether(bwOptsILP, rrOptsILP, bwOptsH, rrOptsH):
+    bwOptsILP = bwOptsILP.groupby("Options").agg([np.mean, confidenceInterval])
+    rrOptsILP = rrOptsILP.groupby("Options").agg([np.mean, confidenceInterval])
+    bwOptsH["BandwidthSaving"] = bwOptsH["BandwidthSaving"].astype(float)
+    bwOptsH = bwOptsH.groupby("Options").agg([np.mean, confidenceInterval])
+    rrOptsH = rrOptsH.groupby("Options").agg([np.mean, confidenceInterval])
+    fig, axs = plt.subplots(nrows=2, ncols=1)
+    ax = axs[0]
+    ax.set_ylim([0, avgServiceProviders])  # math.ceil(bwOptsILP["BandwidthSaving"]["mean"].max())])
+    ax.errorbar(bwOptsILP.index.values, bwOptsILP["BandwidthSaving"]["mean"], yerr=bwOptsILP["BandwidthSaving"]["confidenceInterval"], label="Bandwidth saving (optimal)")
+    ax.errorbar(bwOptsH.index.values, bwOptsH["BandwidthSaving"]["mean"], yerr=bwOptsH["BandwidthSaving"]["confidenceInterval"], label="Bandwidth saving (heuristic)")
+    ax.legend(loc="best")
+    ax = axs[1]
+    ax.errorbar(rrOptsILP.index.values, rrOptsILP["CPU"]["mean"], yerr=rrOptsILP["CPU"]["confidenceInterval"], label="CPU (optimal)")
+    ax.errorbar(rrOptsH.index.values, rrOptsH["CPU"]["mean"], yerr=rrOptsH["CPU"]["confidenceInterval"], label="CPU (heuristic)")
+    ax.errorbar(rrOptsILP.index.values, rrOptsILP["RAM"]["mean"], yerr=rrOptsILP["RAM"]["confidenceInterval"], label="RAM (optimal)")
+    ax.errorbar(rrOptsH.index.values, rrOptsH["RAM"]["mean"], yerr=rrOptsH["RAM"]["confidenceInterval"], label="RAM (heuristic)")
+    ax.legend(loc="best")
+    ax.set_ylim([0, 1])
+    fig.savefig("results/output.png")
+
+def grouped(runs, maxOpt, make_graph = True):
     for i in range(0, runs):
         Random.seed(i)
         simple(maxOpt)
     bwOpts = pd.read_csv("results/bandwidthByAvgOptions.csv", header=None, names=["Options","BandwidthSaving"])
     rrOpts = pd.read_csv("results/remainingResourcesByAvgOptions.csv", header=None, names=["Options", "CPU", "RAM"])
-    makeGraph(bwOpts, rrOpts)
+    if make_graph:
+        makeGraph(bwOpts, rrOpts)
+    return bwOpts, rrOpts
 
-def groupedHeuristic(runs, maxOpts):
+def groupedHeuristic(runs, maxOpts, make_graph = True):
     bwOptss = pd.DataFrame(columns=["Options", "BandwidthSaving"])
     rrOptss = pd.DataFrame(columns=["Options", "CPU", "RAM"])
 
@@ -111,11 +135,18 @@ def groupedHeuristic(runs, maxOpts):
         bwOpts, rrOpts = simpleHeuristic(maxOpts, False)
         bwOptss = bwOptss.append(bwOpts)
         rrOptss = rrOptss.append(rrOpts)
-    makeGraph(bwOptss, rrOptss)
+    if make_graph:
+        makeGraph(bwOptss, rrOptss)
+    return bwOptss, rrOptss
+
+def groupedTogether(runs, maxOpts):
+    bwOptsILP, rrOptsILP = grouped(runs, maxOpts, False)
+    bwOptsH, rrOptsH = groupedHeuristic(runs, maxOpts, False)
+    makeGraphTogether(bwOptsILP, rrOptsILP, bwOptsH, rrOptsH)
 
 os.system("rm -rf results/*")
 #simple(200)
 #grouped(20, 10)
 #simpleHeuristic(10)
-groupedHeuristic(20, 10)
+groupedTogether(20, 10)
 
