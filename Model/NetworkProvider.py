@@ -72,20 +72,20 @@ class NetworkProvider:
                 if not candidateOption:
                     break
                 # Unplace old containers if options for the selected sp has changed
-                option_has_changed = candidateOption.getServiceProvider().getDefaultOption() != candidateOption
+                #option_has_changed = candidateOption.getServiceProvider().getDefaultOption() != candidateOption
                 placement = True
-                if option_has_changed:
-                    # Unplace old option from the cluster
-                    if candidateOption.getServiceProvider().getDefaultOption():
-                        for container in candidateOption.getServiceProvider().getDefaultOption().getContainers():
-                            container.getServer().unplaceContainer(container)
-                    # Try to place new option on the cluster
-                    for container in candidateOption.getContainers():
-                        host = self.__getBestHost(container.getCpuReq(), container.getRamReq())
-                        if host:
-                            host.placeContainer(container)
-                        else:
-                            placement = False
+                #if option_has_changed:
+                #    # Unplace old option from the cluster
+                if candidateOption.getServiceProvider().getDefaultOption():
+                     for container in candidateOption.getServiceProvider().getDefaultOption().getContainers():
+                         container.getServer().unplaceContainer(container)
+                # Try to place new option on the cluster
+                for container in candidateOption.getContainers():
+                    host = self.__getBestHost(container.getCpuReq(), container.getRamReq())
+                    if host:
+                        host.placeContainer(container)
+                    else:
+                        placement = False
                 # Discard the request if any container was not placed in the cluster
                 if not placement:
                     for container in candidateOption.getContainers():
