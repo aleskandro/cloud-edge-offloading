@@ -55,3 +55,15 @@ class GeneratorForModel(Generator):
         self._generateContainers()
         self._generateRequiredResources()
         self._generateBandwidthSaving()
+
+    def generateServiceProviders(self):
+        np = NetworkProvider().getInstance()
+        totalResources = np.getTotalResources()
+        for _ in range(self.serviceProviders.generate()):
+            sp = np.addServiceProvider(ServiceProvider(self.execution_time.generate() if self.execution_time else None))
+            for _ in range(self.options.generate()):
+                opt = sp.addOption(Option(sp))
+                for _ in range(self.containers.generate()):
+                    opt.addContainer(Container(self.reqResources[0].generate(), self.reqResources[1].generate()))
+                resources = opt.getTotalResources()
+                opt.setBandwidthSaving(self.bandwidth.generate(resources, totalResources))

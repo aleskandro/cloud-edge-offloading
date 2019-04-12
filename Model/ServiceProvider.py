@@ -1,15 +1,30 @@
 import multiprocessing
 import operator
 class ServiceProvider:
-    def __init__(self):
+    def __init__(self, execution_time=None):
         self.__options = []
         self.__defaultOption = None
+        self.__start_time = None
+        self.__execution_time = None
+
+    def get_start_time(self):
+        return self.__start_time
+
+    def set_start_time(self, start_time):
+        self.__start_time = start_time
+
+    def get_execution_time(self):
+        return self.__execution_time
+
+    def set_execution_time(self, execution_time):
+        self.__execution_time = execution_time
 
     def getOptions(self):
         return self.__options
 
     def addOption(self, option):
         self.__options.append(option)
+        return option
 
     def getDefaultOption(self):
         return self.__defaultOption

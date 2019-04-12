@@ -13,6 +13,14 @@ class NetworkProvider:
 
         def addServiceProvider(self, serviceProvider):
             self.__serviceProviders.append(serviceProvider)
+            return serviceProvider
+
+        def deleteServiceProvider(self, serviceProvider):
+            if (serviceProvider.getDefaultOption()):
+                for c in serviceProvider.getDefaultOption().getContainers():
+                    if c.getServer():
+                        c.getServer().unplaceContainer(c)
+            self.__serviceProviders.remove(serviceProvider)
 
         def addServer(self, server):
             self.__servers.append(server)
@@ -56,11 +64,18 @@ class NetworkProvider:
                             container.getServer().unplaceContainer(container)
             # Cluster clean
 
-        def makePlacement(self, placement_id):
+        def makePlacement(self, placement_id, time):
             fitting = True
             datas = [[] for _ in self.__serviceProviders]
-            self.__clean_cluster()
-            limit = 100
+            if time == 0:
+                self.__clean_cluster() # Clean the cluster at time 0 or for a non time-batched execution
+            else:
+                for sp in self.__serviceProviders:
+                    if sp.get_start_time() and sp.get_execution_time() and \
+                            time - sp.get_start_time() >= sp.get_execution_time(): # if time elapsed for an execution job
+                        self.deleteServiceProvider(sp)
+
+            limit = 100 # limits the number of iteration to 100, for safety on not convergence but tricky, it should be the total number of options
             while(fitting and limit > 0):
                 limit-=1
                 options = []
@@ -101,6 +116,7 @@ class NetworkProvider:
                     fitting = False
                 else:
                     candidateOption.getServiceProvider().setDefaultOption(candidateOption)
+                    candidateOption.getServiceProvider().set_start_time(time)  # Option is being deployed, setting start time
 
                 sp_index = 0
                 for sp in self.__serviceProviders:
