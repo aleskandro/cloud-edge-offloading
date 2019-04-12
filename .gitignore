@@ -1,4 +1,4 @@
-results/
+results_*/
 __pycache__/
 .*.sw[op]
 scenario.dat
