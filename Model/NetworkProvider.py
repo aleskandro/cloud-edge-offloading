@@ -119,11 +119,9 @@ class NetworkProvider:
                     candidateOption.getServiceProvider().setDefaultOption(candidateOption)
                     candidateOption.getServiceProvider().set_start_time(time)  # Option is being deployed, setting start time
 
-                sp_index = 0
-                for sp in self.__serviceProviders:
+                for sp_index, sp in enumerate(self.__serviceProviders):
                     datas[sp_index].append(sp.getOptions().index(sp.getDefaultOption()) + 1 if sp.getDefaultOption()
                         else 0)
-                    sp_index += 1
             print(datas)
             #self.__print_datas(datas, placement_id)
 #        def makePlacement(self, placement_id):
