@@ -45,7 +45,7 @@ class GeneratorForModel(Generator):
 
     def _generateServiceProviders(self):
         np = NetworkProvider().getInstance()
-        [np.addServiceProvider(ServiceProvider()) for _ in range(self.nbServiceProviders)]
+        [np.addServiceProvider(ServiceProvider(self.execution_time.generate() if self.execution_time else None)) for _ in range(self.nbServiceProviders)]
 
     def generate(self):
         NetworkProvider().getInstance().clean()

@@ -106,7 +106,7 @@ def makeGraph(bwOpts, rrOpts, timing):
     ax.legend(loc="best")
     ax.set_ylim([0, 1])
     ax = axs[2]
-    ax.errorbar(timing.index.values, timing["Time"]["mean"], yerr=timing["Time"]["mean"], label="Time elapsed")
+    ax.errorbar(timing.index.values, timing["Time"]["mean"], yerr=timing["Time"]["confidenceInterval"], label="Time elapsed")
     ax.legend(loc="best")
     fig.savefig("results/output.png")
 
@@ -158,7 +158,7 @@ def groupedHeuristic(runs, maxOpts, make_graph = True):
         bwOpts, rrOpts, timing = simpleHeuristic(maxOpts, False)
         bwOptss = bwOptss.append(bwOpts)
         rrOptss = rrOptss.append(rrOpts)
-        timingg = timing.append(timing)
+        timingg = timingg.append(timing)
     if make_graph:
         makeGraph(bwOptss, rrOptss, timingg)
     return bwOptss, rrOptss, timingg

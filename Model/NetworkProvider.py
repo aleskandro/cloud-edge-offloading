@@ -64,17 +64,17 @@ class NetworkProvider:
                             container.getServer().unplaceContainer(container)
             # Cluster clean
 
-        def makePlacement(self, placement_id, time):
+        def makePlacement(self, placement_id, time=0):
             fitting = True
-            datas = [[] for _ in self.__serviceProviders]
             if time == 0:
                 self.__clean_cluster() # Clean the cluster at time 0 or for a non time-batched execution
             else:
                 for sp in self.__serviceProviders:
-                    if sp.get_start_time() and sp.get_execution_time() and \
-                            time - sp.get_start_time() >= sp.get_execution_time(): # if time elapsed for an execution job
+                    if not sp.get_start_time() is None and not sp.get_execution_time() is None:
+                            #time - sp.get_start_time() >= sp.get_execution_time(): # if time elapsed for an execution job
                         self.deleteServiceProvider(sp)
 
+            datas = [[] for _ in self.__serviceProviders]
             limit = 100 # limits the number of iteration to 100, for safety on not convergence but tricky, it should be the total number of options
             while(fitting and limit > 0):
                 limit-=1
@@ -93,7 +93,8 @@ class NetworkProvider:
                 #    # Unplace old option from the cluster
                 if candidateOption.getServiceProvider().getDefaultOption():
                      for container in candidateOption.getServiceProvider().getDefaultOption().getContainers():
-                         container.getServer().unplaceContainer(container)
+                         if container.getServer():
+                             container.getServer().unplaceContainer(container)
                 # Try to place new option on the cluster
                 for container in candidateOption.getContainers():
                     host = self.__getBestHost(container.getCpuReq(), container.getRamReq())
@@ -124,7 +125,7 @@ class NetworkProvider:
                         else 0)
                     sp_index += 1
             print(datas)
-            self.__print_datas(datas, placement_id)
+            #self.__print_datas(datas, placement_id)
 #        def makePlacement(self, placement_id):
 #            convergence = False
 #            datas = [[] for _ in self.__serviceProviders]

@@ -5,7 +5,7 @@ class ServiceProvider:
         self.__options = []
         self.__defaultOption = None
         self.__start_time = None
-        self.__execution_time = None
+        self.__execution_time = execution_time
 
     def get_start_time(self):
         return self.__start_time
