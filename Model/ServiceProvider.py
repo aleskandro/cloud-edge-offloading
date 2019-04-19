@@ -63,3 +63,7 @@ class ServiceProvider:
         subset = self.__getCandidateOptions()
         if len(subset) == 0: return None
         return max(subset, key=lambda opt: opt.getEfficiency())
+
+    def __str__(self):
+        return "Service provider: \n" + \
+               "Default option: %s\nOptions: %s\n" % (str(self.__defaultOption), [str(item) for item in self.__options])

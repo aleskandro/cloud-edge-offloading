@@ -4,3 +4,5 @@ __pycache__/
 scenario.dat
 venv/
 .idea/workspace.xml
+tresults/
+datasets/

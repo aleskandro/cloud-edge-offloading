@@ -1,5 +1,5 @@
 class Generator:
-    def __init__(self, servers, serviceProviders, options, containers, resources, bandwidth, reqResources, execution_time = None):
+    def __init__(self, servers, serviceProviders, options, containers, resources, bandwidth, reqResources, execution_time = None, K = None):
         self.servers = servers
         self.serviceProviders = serviceProviders
         self.options = options
@@ -11,6 +11,7 @@ class Generator:
         self.nbResources = len(self.resources)
         self.nbServiceProviders = self.serviceProviders.generate()
         self.execution_time = execution_time
+        self._K = K
 
     def _generateAvailableResources(self):
         availableResources = {}

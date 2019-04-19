@@ -21,3 +21,6 @@ class Container:
 
     def setCpuReq(self, cpu):
         self.__cpuReq = cpu
+
+    def __str__(self):
+        return "CPU: %f - RAM: %f" % (self.getCpuReq(), self.getRamReq())

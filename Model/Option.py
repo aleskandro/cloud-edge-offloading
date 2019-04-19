@@ -75,3 +75,7 @@ class Option:
             denominator += (self.getRamReq() - tram) * 1/server.getTotalRam()
 
         self.__efficiency = numerator / denominator
+
+    def __str__(self):
+        return "Option \n" + \
+            "Bandwidth saving: %f\nContainers: \n %s" % (self.__bandwidthSaving, [str(item) for item in self.__containers])

@@ -41,7 +41,7 @@ ramReq = UniformRandomVariable(0, K * (avgRam * avgServers) / (avgContainers * a
 cpuReq = UniformRandomVariable(0, K * (avgCpu * avgServers) / (avgContainers * avgServiceProviders))
 
 rate = 1          # req/slot
-time_window = 5   # min/slot
+time_window = 20   # min/slot
 time_limit = 200  # limit time for batch execution
 execution_time_scale = 2  # set me TODO
 
@@ -89,22 +89,26 @@ def makeGraph(bwOpts, rrOpts, timing, activeServices):
     activeServices["Services"] = activeServices["Services"].astype(float)
     activeServices = activeServices.groupby("t").agg([np.mean, confidenceInterval])
 
-    fig, axs = plt.subplots(nrows=4, ncols=1)
+    fig, axs = plt.subplots(nrows=4, ncols=1, figsize=(10, 15))
     ax = axs[0]
     ax.set_ylim([0, math.ceil(bwOpts["BandwidthSaving"]["mean"].max())])
     ax.errorbar(bwOpts.index.values, bwOpts["BandwidthSaving"]["mean"], yerr=bwOpts["BandwidthSaving"]["confidenceInterval"], label="Bandwidth saving")
     ax.legend(loc="best")
+    ax.set_xlabel("Time")
     ax = axs[1]
     ax.errorbar(rrOpts.index.values, rrOpts["CPU"]["mean"], yerr=rrOpts["CPU"]["confidenceInterval"], label="CPU")
     ax.errorbar(rrOpts.index.values, rrOpts["RAM"]["mean"], yerr=rrOpts["RAM"]["confidenceInterval"], label="RAM")
     ax.legend(loc="best")
     ax.set_ylim([0, 1])
+    ax.set_xlabel("Time")
     ax = axs[2]
     ax.errorbar(timing.index.values, timing["Time"]["mean"], yerr=timing["Time"]["confidenceInterval"], label="Time elapsed")
     ax.legend(loc="best")
+    ax.set_xlabel("Time")
     ax = axs[3]
     ax.errorbar(activeServices.index.values, activeServices["Services"]["mean"], yerr=activeServices["Services"]["confidenceInterval"], label="Active services")
     ax.legend(loc="best")
+    ax.set_xlabel("Time")
     fig.savefig("results/output.png")
 
 def groupedHeuristic(runs, maxOpts, make_graph = True):

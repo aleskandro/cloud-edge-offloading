@@ -16,16 +16,16 @@
 
 
 import glob
-from random import randint
 import pandas as pd
 import numpy as np
-
+import math
+import numpy.random as Random
 
 def random_job_attempt():
     #### INPUT PARAMETERS
     DEBUGG = False
-    dataset_path = "/home/araldo/tsp/formation/machine_learning/datasets/googlecluster/"
-    
+    #dataset_path = "/home/araldo/tsp/formation/machine_learning/datasets/googlecluster/"
+    dataset_path = "datasets/"
     # The following information is taken from schema.csv provided by google
     job_id_field_in_job_events = 2 # This is to avoid the overhead of loading the headers
     event_type_field_in_job_events = 3
@@ -45,7 +45,7 @@ def random_job_attempt():
     job_files = [f for f in glob.glob(job_filename_string)]
     if DEBUGG:
         print("job_files are",job_files)
-    r = randint(0, len(job_files)-1)
+    r = math.ceil(Random.uniform(0, len(job_files)-1))
     job_file = job_files[r]
     if DEBUGG:
         print("file selected: ", job_file)
@@ -62,7 +62,7 @@ def random_job_attempt():
         print("There are ",num_of_unique_job_ids," unique job_ids")
          
     # Select a random job_id
-    r = randint(0, len(job_ids)-1)
+    r = math.ceil(Random.uniform(0, len(job_ids)-1))
     job_id = job_ids[r]
     
     if DEBUGG:
@@ -99,3 +99,6 @@ def random_job():
         if job_description.shape[0] > 0:
             job_found = True
     return job_description
+
+if __name__ == "__main__":
+    print(random_job())

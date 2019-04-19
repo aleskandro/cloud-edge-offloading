@@ -54,14 +54,14 @@ param avgOptions := (sum{i in 1..nbServiceProviders} nbOptions[i])/nbServiceProv
 display avgOptions;
 
 
-printf "%f,%f\n", avgOptions, opt >> "results/bandwidthByAvgOptions.csv";
+printf "%f,%f\n", avgOptions, opt >> "tresults/bandwidthByAvgOptions.csv";
 
 display totalResources;
-printf{r in 1..nbResources} "%f,", totalResources[r] >> "results/bandwidthByResources.csv";
-printf "%f\n", opt >> "results/bandwidthByResources.csv";
+printf{r in 1..nbResources} "%f,", totalResources[r] >> "tresults/bandwidthByResources.csv";
+printf "%f\n", opt >> "tresults/bandwidthByResources.csv";
 
 display remainingTotalResources;
 
-printf "%f", avgOptions >> "results/remainingResourcesByAvgOptions.csv";
-printf{r in 1..nbResources} ",%f", remainingTotalResources[r] >> "results/remainingResourcesByAvgOptions.csv";
-printf "\n" >> "results/remainingResourcesByAvgOptions.csv";
+printf "%f", avgOptions >> "tresults/remainingResourcesByAvgOptions.csv";
+printf{r in 1..nbResources} ",%f", remainingTotalResources[r] >> "tresults/remainingResourcesByAvgOptions.csv";
+printf "\n" >> "tresults/remainingResourcesByAvgOptions.csv";
