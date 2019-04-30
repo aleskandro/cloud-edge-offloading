@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import time
+import glob
 
 from Generator.Generator import *
 from Generator.GeneratorBwConcave import *
@@ -16,37 +17,35 @@ from Random.PoissonRandomVariable import *
 from Random.ResourceDependentRandomVariable import *
 from Random.ExponentialRandomVariable import *
 
-Random.seed(6)
-maxCpu = 30
-maxRam = 30000
-avgServers = 8
+def generate_input_datas(maxCpu=30, maxRam=30000, avgServers=8, avgContainers=8, avgServiceProviders=5, K=1.6, trate = 1, ttime_window=20, execution_time_scale=2):
+    Random.seed(1)
+    avgRam = maxRam/avgServers
+    avgCpu = maxCpu/avgServers
+    # avgBandwidth = 100
+    global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq, rate, time_window, time_limit
+    global serviceProviders, execution_time
 
-avgRam = maxRam/avgServers # Average ram for a single server (this is the maximum amount of ram that a container can get)
-avgCpu = maxCpu/avgServers # Average cpu for a single server (this is the maximum amount of cpu that a container can get)
+    servers = UniformRandomVariable(avgServers, avgServers)
+    ram = NormalRandomVariable(avgRam, 0)
+    cpu = NormalRandomVariable(avgCpu, 0)
 
-avgContainers = 8
-avgServiceProviders = 5
-# avgBandwidth = 100
-K = 1.6
-servers = UniformRandomVariable(avgServers, avgServers)
-ram = NormalRandomVariable(avgRam, 0)
-cpu = NormalRandomVariable(avgCpu, 0)
+    serviceProviders = UniformRandomVariable(avgServiceProviders, avgServiceProviders)
+    # bandwidth = NormalRandomVariable(avgBandwidth, 50)
+    bandwidth = ResourceDependentRandomVariable(UniformRandomVariable(1,5))
+    containers = UniformRandomVariable(avgContainers, avgContainers)
 
-#serviceProviders = UniformRandomVariable(avgServiceProviders, avgServiceProviders)
-# bandwidth = NormalRandomVariable(avgBandwidth, 50)
-bandwidth = ResourceDependentRandomVariable(UniformRandomVariable(1,5))
-containers = UniformRandomVariable(avgContainers, avgContainers)
+    ramReq = UniformRandomVariable(0, K * (avgRam * avgServers) / (avgContainers * avgServiceProviders))
+    cpuReq = UniformRandomVariable(0, K * (avgCpu * avgServers) / (avgContainers * avgServiceProviders))
 
-ramReq = UniformRandomVariable(0, K * (avgRam * avgServers) / (avgContainers * avgServiceProviders))
-cpuReq = UniformRandomVariable(0, K * (avgCpu * avgServers) / (avgContainers * avgServiceProviders))
 
-rate = 1          # req/slot
-time_window = 20   # min/slot
-time_limit = 200  # limit time for batch execution
-execution_time_scale = 2  # set me TODO
+    rate = trate  # req/slot
+    time_window = ttime_window  # min/slot
+    time_limit = 200  # limit time for batch execution
 
-serviceProviders = PoissonRandomVariable(time_window * rate)
-execution_time = ExponentialRandomVariable(execution_time_scale)
+    serviceProviders = PoissonRandomVariable(time_window * rate)
+    execution_time = ExponentialRandomVariable(execution_time_scale)
+
+    return servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
 
 def simpleHeuristic(maxOpt, make_graph=True):
     bwOpts2 = pd.DataFrame(columns=["t", "BandwidthSaving", "Options"])
@@ -76,6 +75,60 @@ def simpleHeuristic(maxOpt, make_graph=True):
         makeGraph(bwOpts2, rrOpts2, timing, activeServices)
     return bwOpts2, rrOpts2, timing, activeServices
 
+def groupedHeuristic(runs, maxOpts, make_graph = True):
+    bwOptss = pd.DataFrame(columns=["t", "Options", "BandwidthSaving"])
+    rrOptss = pd.DataFrame(columns=["t", "Options", "CPU", "RAM"])
+    timingg = pd.DataFrame(columns=["t", "Options", "Time"])
+    activeServicess = pd.DataFrame(columns=["t", "Options", "Services"])
+    for i in range(0, runs):
+        Random.seed(i)
+        bwOpts, rrOpts, timing, activeServices = simpleHeuristic(maxOpts, False)
+        bwOptss = bwOptss.append(bwOpts)
+        rrOptss = rrOptss.append(rrOpts)
+        timingg = timingg.append(timing)
+        activeServicess = activeServicess.append(activeServices)
+    if make_graph:
+        makeGraph(bwOptss, rrOptss, timingg, activeServicess)
+    return bwOptss, rrOptss, timingg, activeServicess
+
+def varying_rate(runs, maxOpts, rates):
+    for rate in rates:
+        if len(glob.glob("results/batched-rate-%d-*" % rate)) > 0:
+            continue
+        generate_input_datas(trate=rate)
+        bwOpts, rrOpts, timing, activeServices = groupedHeuristic(runs, maxOpts, False)
+
+        bwOpts = bwOpts.groupby("t").agg([np.mean, confidenceInterval])
+        rrOpts = rrOpts.groupby("t").agg([np.mean, confidenceInterval])
+        timing = timing.groupby("t").agg([np.mean, confidenceInterval])
+        activeServices["Services"] = activeServices["Services"].astype(float)
+        activeServices = activeServices.groupby("t").agg([np.mean, confidenceInterval])
+
+        bwOpts.to_csv("results/batched-rate-%d-bwopts.csv" % rate)
+        rrOpts.to_csv("results/batched-rate-%d-rropts.csv" % rate)
+        timing.to_csv("results/batched-rate-%d-timing.csv" % rate)
+        activeServices.to_csv("results/batched-rate-%d-services.csv" % rate)
+    make_graph_from_file("batched-rate-*")
+
+def varying_ex_time_scale(runs, maxOpts, ex_time_scales):
+    for execution_time_scale in ex_time_scales:
+        if len(glob.glob("results/batched-scale-%d-*")) > 0:
+            continue
+        generate_input_datas(execution_time_scale=execution_time_scale)
+
+        bwOpts, rrOpts, timing, activeServices = groupedHeuristic(runs, maxOpts, False)
+
+        bwOpts = bwOpts.groupby("t").agg([np.mean, confidenceInterval])
+        rrOpts = rrOpts.groupby("t").agg([np.mean, confidenceInterval])
+        timing = timing.groupby("t").agg([np.mean, confidenceInterval])
+        activeServices["Services"] = activeServices["Services"].astype(float)
+        activeServices = activeServices.groupby("t").agg([np.mean, confidenceInterval])
+
+        bwOpts.to_csv("results/batched-scale-%d-bwopts.csv" % execution_time_scale)
+        rrOpts.to_csv("results/batched-scale-%d-rropts.csv" % execution_time_scale)
+        timing.to_csv("results/batched-scale-%d-timing.csv" % execution_time_scale)
+        activeServices.to_csv("results/batched-scale-%d-services.csv" % execution_time_scale)
+    make_graph_from_file("batched-scale-*")
 def confidenceInterval(x):
     std  = x.std()
     count= x.count()
@@ -111,24 +164,55 @@ def makeGraph(bwOpts, rrOpts, timing, activeServices):
     ax.set_xlabel("Time")
     fig.savefig("results/output.png")
 
-def groupedHeuristic(runs, maxOpts, make_graph = True):
-    bwOptss = pd.DataFrame(columns=["t", "Options", "BandwidthSaving"])
-    rrOptss = pd.DataFrame(columns=["t", "Options", "CPU", "RAM"])
-    timingg = pd.DataFrame(columns=["t", "Options", "Time"])
-    activeServicess = pd.DataFrame(columns=["t", "Options", "Services"])
-    for i in range(0, runs):
-        Random.seed(i)
-        bwOpts, rrOpts, timing, activeServices = simpleHeuristic(maxOpts, False)
-        bwOptss = bwOptss.append(bwOpts)
-        rrOptss = rrOptss.append(rrOpts)
-        timingg = timingg.append(timing)
-        activeServicess = activeServicess.append(activeServices)
-    if make_graph:
-        makeGraph(bwOptss, rrOptss, timingg, activeServicess)
-    return bwOptss, rrOptss, timingg, activeServicess
+def make_graph_from_file(filename_regex):
+    fig, axs = plt.subplots(nrows=4, ncols=1, figsize=(10,15))
+    ylim = 0
+    ax = axs[0]
+    ax.set_ylabel("Utility")
+    for file in glob.glob("results/" + filename_regex + "-bwopts.csv"):
+        bwopts = pd.read_csv(file)
+        varied_key = file.split("-")[2]
+        varied_value = file.split("-")[3]
+        ylim = max(ylim, math.ceil(bwopts["BandwidthSaving"]["mean"].max()))
+        ax.set_ylim([0, ylim])
+        ax.errorbar(bwopts.index.values, bwopts["BandwidthSaving"]["mean"], yerr=bwopts["BandwidthSaving"]["confidenceInterval"],
+                    label="Bandwidth saving (%s = %s)" % (varied_key, varied_value))
+    ax = axs[1]
+    ax.set_ylabel("Available resources (%)")
+    ax.set_ylim([0, 100])
+    for file in glob.glob("results/" + filename_regex + "-rropts.csv"):
+        rropts = pd.read_csv(file)
+        varied_key = file.split("-")[2]
+        varied_value = file.split("-")[3]
+        ax.errorbar(rropts.index.values, rropts["CPU"]["mean"]*100, yerr=rropts["CPU"]["confidenceInterval"]*100,
+                    label="CPUs (%s = %s)" % (varied_key, varied_value))
+        ax.errorbar(rropts.index.values, rropts["RAM"]["mean"]*100, yerr=rropts["RAM"]["confidenceInterval"]*100,
+                    label="RAM (%s = %s)" % (varied_key, varied_value))
 
-os.system("rm -rf results/*")
-#simple(200)
-#grouped(20, 10)
-#simpleHeuristic(10)
-groupedHeuristic(20, 10)
+    ax = axs[2]
+    ax.set_ylabel("Time elapsed (s)")
+    for file in glob.glob("results/" + filename_regex + "-timing.csv"):
+        timing = pd.read_csv(file)
+        varied_key = file.split("-")[2]
+        varied_value = file.split("-")[3]
+        ax.errorbar(timing.index.values, timing["Time"]["mean"], yerr=timing["Time"]["confidenceInterval"],
+                    label="Time (s) (%s = %s)" % (varied_key, varied_value))
+
+    ax = axs[3]
+    ax.set_ylabel("Active services")
+    for file in glob.glob("results/" + filename_regex + "-services.csv"):
+        timing = pd.read_csv(file)
+        varied_key = file.split("-")[2]
+        varied_value = file.split("-")[3]
+        ax.errorbar(timing.index.values, timing["Time"]["mean"], yerr=timing["Time"]["confidenceInterval"],
+                    label="N. services (%s = %s)" % (varied_key, varied_value))
+
+    for ax in axs:
+        ax.set_xlabel("Time (m)")
+        ax.legend(loc="best")
+    fig.savefig("results/"+ filename_regex[0:-2] + ".png")
+
+generate_input_datas()
+#groupedHeuristic(20, 10)
+varying_rate(20, 10, [1, 2, 4, 8])
+varying_ex_time_scale(20, 10, [2, 5, 30])
