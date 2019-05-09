@@ -15,35 +15,35 @@ class Generator:
 
     def _generateAvailableResources(self):
         availableResources = {}
-        for i in range(self.nbServers):
+        for i in range(round(self.nbServers)):
             for j in range(self.nbResources):
                 availableResources[i,j] = self.resources[j].generate()
         return availableResources
 
     def _generateOptions(self):
         options = []
-        for i in range(self.nbServiceProviders):
+        for i in range(round(self.nbServiceProviders)):
             options.append(self.options.generate())
         return options
 
     def _generateBandwidthSaving(self, optionsArray):
         bandwidthSaving = {}
-        for i in range(self.nbServiceProviders):
+        for i in range(round(self.nbServiceProviders)):
             for j in range(optionsArray[i]):
                 bandwidthSaving[i,j] = self.bandwidth.generate()
         return bandwidthSaving
 
     def _generateContainers(self, optionsArray):
         containers = {}
-        for i in range(self.nbServiceProviders):
-            for j in range(optionsArray[i]):
-                containers[i,j] = self.containers.generate()
+        for i in range(round(self.nbServiceProviders)):
+            for j in range(round(optionsArray[i])):
+                containers[i,j] = round(self.containers.generate())
         return containers
 
     def _generateRequiredResources(self, optionsArray, containersArray): 
         requiredResources = {}
-        for i in range(self.nbServiceProviders):
-            for j in range(optionsArray[i]):
+        for i in range(round(self.nbServiceProviders)):
+            for j in range(round(optionsArray[i])):
                 for k in range(containersArray[i,j]):
                     for l in range(self.nbResources):
                         requiredResources[i,j,k,l] = self.reqResources[l].generate()

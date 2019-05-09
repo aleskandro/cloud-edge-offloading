@@ -17,11 +17,15 @@ from Random.NormalRandomVariable import *
 from Random.UniformRandomVariable import *
 from Random.ResourceDependentRandomVariable import *
 
+maxxCpu = 30
+maxxRam = 30000
+defaultOptions = 5
+def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=1, avgContainers=1, avgServiceProviders=50, K=1.8):
+    global maxxCpu, maxxRam
 
-def generate_input_datas(maxCpu=30, maxRam=30000, avgServers=8, avgContainers=8, avgServiceProviders=5, K=1.6):
-
-    avgRam = maxRam/avgServers
-    avgCpu = maxCpu/avgServers
+    maxxCpu = avgCpu * avgServers
+    maxxRam = avgRam * avgServers
+    print(maxxCpu, maxxRam)
     # avgBandwidth = 100
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
 
@@ -34,8 +38,8 @@ def generate_input_datas(maxCpu=30, maxRam=30000, avgServers=8, avgContainers=8,
     bandwidth = ResourceDependentRandomVariable(UniformRandomVariable(1,5))
     containers = UniformRandomVariable(avgContainers, avgContainers)
 
-    ramReq = UniformRandomVariable(0, K * (avgRam * avgServers) / (avgContainers * avgServiceProviders))
-    cpuReq = UniformRandomVariable(0, K * (avgCpu * avgServers) / (avgContainers * avgServiceProviders))
+    ramReq = UniformRandomVariable(0, K * (avgRam * avgServers) / (avgContainers * avgServiceProviders), False)
+    cpuReq = UniformRandomVariable(0, K * (avgCpu * avgServers) / (avgContainers * avgServiceProviders), False)
     return servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
 
 def simpleHeuristic(maxOpt, make_graph=True):
@@ -43,7 +47,8 @@ def simpleHeuristic(maxOpt, make_graph=True):
     bwOpts2 = pd.DataFrame(columns=["BandwidthSaving", "Options"])
     rrOpts2 = pd.DataFrame(columns=["Options", "CPU", "RAM"])
     timing = pd.DataFrame(columns=["Options", "Time"])
-    for i in range(1, maxOpt + 1):
+    i = 1
+    while (i <= maxOpt + 1):
         options = UniformRandomVariable(i, i)
         generate_input_datas()
         generator = GeneratorForModel(servers, serviceProviders,
@@ -56,6 +61,7 @@ def simpleHeuristic(maxOpt, make_graph=True):
         timing.loc[len(timing)] = {"Options": i, "Time": t2 - t1}
         bwOpts2.loc[len(bwOpts2)] = {"Options": i, "BandwidthSaving": npp.getBandwidthSaving()}
         rrOpts2.loc[len(rrOpts2)] = {"Options": i, "CPU": npp.getRemainingResources()[0], "RAM": npp.getRemainingResources()[1]}
+        i *= 2
     if make_graph:
         makeGraph(bwOpts2, rrOpts2, timing)
     return bwOpts2, rrOpts2, timing
@@ -65,7 +71,8 @@ def simpleHeuristicVarServers(maxServers, make_graph=True):
     bwOpts2 = pd.DataFrame(columns=["BandwidthSaving", "Options"])
     rrOpts2 = pd.DataFrame(columns=["Options", "CPU", "RAM"])
     timing = pd.DataFrame(columns=["Options", "Time"])
-    for i in range(1, maxServers + 1):
+    i = 1
+    while (i <= maxServers + 1):
         options = UniformRandomVariable(10, 10)
         generate_input_datas(avgServers=i)
         generator = GeneratorForModel(servers, serviceProviders,
@@ -78,6 +85,7 @@ def simpleHeuristicVarServers(maxServers, make_graph=True):
         timing.loc[len(timing)] = {"Options": i, "Time": t2 - t1}
         bwOpts2.loc[len(bwOpts2)] = {"Options": i, "BandwidthSaving": npp.getBandwidthSaving()}
         rrOpts2.loc[len(rrOpts2)] = {"Options": i, "CPU": npp.getRemainingResources()[0], "RAM": npp.getRemainingResources()[1]}
+        i *= 2
     if make_graph:
         makeGraph(bwOpts2, rrOpts2, timing)
     return bwOpts2, rrOpts2, timing
@@ -87,8 +95,9 @@ def simpleHeuristicVarContainers(maxContainers, make_graph=True):
     bwOpts2 = pd.DataFrame(columns=["BandwidthSaving", "Options"])
     rrOpts2 = pd.DataFrame(columns=["Options", "CPU", "RAM"])
     timing = pd.DataFrame(columns=["Options", "Time"])
-    for i in range(1, maxContainers + 1):
-        options = UniformRandomVariable(10, 10)
+    i = 1
+    while (i <= maxContainers + 1):
+        options = UniformRandomVariable(defaultOptions, defaultOptions)
         generate_input_datas(avgContainers=i)
         generator = GeneratorForModel(servers, serviceProviders,
                                       options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq])
@@ -100,6 +109,7 @@ def simpleHeuristicVarContainers(maxContainers, make_graph=True):
         timing.loc[len(timing)] = {"Options": i, "Time": t2 - t1}
         bwOpts2.loc[len(bwOpts2)] = {"Options": i, "BandwidthSaving": npp.getBandwidthSaving()}
         rrOpts2.loc[len(rrOpts2)] = {"Options": i, "CPU": npp.getRemainingResources()[0], "RAM": npp.getRemainingResources()[1]}
+        i *= 2
     if make_graph:
         makeGraph(bwOpts2, rrOpts2, timing)
     return bwOpts2, rrOpts2, timing
@@ -121,48 +131,54 @@ def groupedHeuristic(runs, maxOpts, function_to_call, make_graph = True):
 def simple(maxOpt):
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
     timing = pd.DataFrame(columns=["Options", "Time"])
-    for i in range(1, maxOpt + 1): 
+    i = 1
+    while(i <= maxOpt + 1):
         options = UniformRandomVariable(i, i)
         # generator = Generator(servers, serviceProviders, options, containers, [ram, cpu], bandwidth, [ramReq, cpuReq])
         generator = GeneratorBwConcave(servers, serviceProviders, options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq])
 
         generator.generate()
         t1 = time.time()
-        os.system("timeout 10 glpsol --math modelglpk.mod -d scenario.dat")
+        os.system("glpsol --math modelglpk.mod -d scenario.dat --tmlim 600")
         t2 = time.time()
         timing.loc[len(timing)] = {"Options": i, "Time": t2-t1}
+        i *= 2
     return timing
 
 def simpleVarServers(maxOpt):
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
     timing = pd.DataFrame(columns=["Options", "Time"])
-    for i in range(1, maxOpt + 1):
-        options = UniformRandomVariable(5, 5)
+    i = 1
+    while(i <= maxOpt + 1):
+        options = UniformRandomVariable(defaultOptions, defaultOptions)
         generate_input_datas(avgServers=i)
         # generator = Generator(servers, serviceProviders, options, containers, [ram, cpu], bandwidth, [ramReq, cpuReq])
         generator = GeneratorBwConcave(servers, serviceProviders, options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq])
 
         generator.generate()
         t1 = time.time()
-        os.system("timeout 10 glpsol --math modelglpk.mod -d scenario.dat")
+        os.system("glpsol --math modelglpk.mod -d scenario.dat --tmlim 600")
         t2 = time.time()
         timing.loc[len(timing)] = {"Options": i, "Time": t2-t1}
+        i *= 2
     return timing
 
 def simpleVarContainers(maxOpt):
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
     timing = pd.DataFrame(columns=["Options", "Time"])
-    for i in range(1, maxOpt + 1):
-        options = UniformRandomVariable(5, 5)
+    i = 1
+    while(i <= maxOpt + 1):
+        options = UniformRandomVariable(defaultOptions, defaultOptions)
         generate_input_datas(avgContainers=i)
         # generator = Generator(servers, serviceProviders, options, containers, [ram, cpu], bandwidth, [ramReq, cpuReq])
         generator = GeneratorBwConcave(servers, serviceProviders, options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq])
 
         generator.generate()
         t1 = time.time()
-        os.system("timeout 10 glpsol --math modelglpk.mod -d scenario.dat")
+        os.system("timeout 600 glpsol --math modelglpk.mod -d scenario.dat --tmlim 580")
         t2 = time.time()
         timing.loc[len(timing)] = {"Options": i, "Time": t2-t1}
+        i *= 2
     return timing
 
 def grouped(runs, maxOpt, function_to_call, make_graph = True):
@@ -290,7 +306,8 @@ def make_graph_from_file(filename, ilp_key, xlabel):
     #    ax.set_prop_cycle(monochrome)
 
     ax = axs[0]
-    ax.set_ylim([0, 5]) # avgServiceProviders])  # math.ceil(bwOptsILP["BandwidthSaving"]["mean"].max())])
+    max_y = 0
+    ax.set_ylim([0, max_y])
     ax.set_ylabel("Utility")
     for file in glob.glob("results/" + filename + "*-bwOptsILP.csv"):
         bwOptsILP = pd.read_csv(file)
@@ -299,7 +316,8 @@ def make_graph_from_file(filename, ilp_key, xlabel):
         ax.errorbar(bwOptsILP.index.values, bwOptsILP["BandwidthSaving"]["mean"],
                     yerr=bwOptsILP["BandwidthSaving"]["confidenceInterval"],
                     label="Bandwidth saving (optimal)")
-
+        max_y = max(math.ceil(bwOptsILP["BandwidthSaving"]["mean"].max()) + 2, max_y)
+        ax.set_ylim([0, max_y])
     for file in glob.glob("results/" + filename + "*-bwOptsH.csv"):
         bwOptsH = pd.read_csv(file)
         bwOptsH["BandwidthSaving"] = bwOptsH["BandwidthSaving"].astype(float)
@@ -361,7 +379,7 @@ def confidenceInterval(x):
 def fairness():
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
     Random.seed(2)
-    options = UniformRandomVariable(5, 5)
+    options = UniformRandomVariable(defaultOptions, defaultOptions)
     generate_input_datas(K=10)
     generator = GeneratorForModel(servers, serviceProviders,
                                   options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq])
@@ -405,8 +423,39 @@ def fairness_graph():
     ax.set_xlabel("CPUs")
     ax.set_ylabel("RAM (Mb)")
     fig.savefig("results/fairness.png")
+
+def fairness_graph2():
+    global maxxCpu, maxxRam
+    print(maxxCpu, maxxRam)
+    if len(glob.glob("results/fairness.csv")) == 0:
+        fairness()
+
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10,6))
+    monochrome = (cycler('color', ['k']) * cycler('linestyle', ['-', '--', ':']) * cycler('marker',['^', ',', '.']))
+    #for ax in axs:
+    #    ax.set_prop_cycle(monochrome)
+
+    df = pd.read_csv("results/fairness.csv")
+    ax = axs[0]
+    for i in df["ServiceProvider"].unique():
+        ax.scatter(df.loc[(df["ServiceProvider"] == i) & (df["Width"] == 10)]["ServiceProvider"],
+                   df.loc[(df["ServiceProvider"] == i) & (df["Width"] == 10)]["Utility"],
+                   c="k")
+    ax.scatter(df.loc[df["Width"] == 70]["ServiceProvider"],
+           df.loc[df["Width"] == 70]["Utility"],
+           c="k", marker="x", s=70)
+    ax.set_xlabel("Service provider ID")
+    ax.set_ylabel("Utility")
+    ax = axs[1]
+    ax.scatter(df.loc[df["Width"] == 70]["CPU"],
+               df.loc[df["Width"] == 70]["RAM"], c="k")
+    ax.set_ylim([0, maxxRam])
+    ax.set_xlim([0, maxxCpu])
+    ax.set_xlabel("CPUs")
+    ax.set_ylabel("RAM (Mb)")
+    fig.subplots_adjust(wspace=0.35)
+    fig.savefig("results/fairness.png")
 os.system("rm -rf tresults/*")
-#generate_input_datas()
 #simple(200)
 #grouped(20, 10)
 #simpleHeuristic(10)
@@ -416,10 +465,11 @@ os.system("rm -rf tresults/*")
 #groupedTogetherSaveFixedServersDiferentCC(20, 10, [1, 2, 4, 8])
 #make_graph_from_file("cmpILPH-Options-VaryingContainers", "containers")
 #make_graph_from_file("cmpILPH-Options-VaryingServers", "servers")
-groupedTogetherSaveVarOptionsFixedServersFixedCC(20, 10)
+#groupedTogetherSaveVarOptionsFixedServersFixedCC(20, 10)
 groupedTogetherSaveFixedOptionsVarServersFixedCC(20, 16)
-groupedTogetherSaveFixedOptionsFixedServersVarCC(20, 16)
+#groupedTogetherSaveFixedOptionsFixedServersVarCC(20, 16)
 make_graph_from_file("cmpILPH-Options", "Options", "Number of options per service providers")
 make_graph_from_file("cmpILPH-Servers", "Servers", "Number of servers")
 make_graph_from_file("cmpILPH-Containers", "Containers", "Number of containers per option")
-fairness_graph()
+#generate_input_datas()
+#fairness_graph2()

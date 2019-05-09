@@ -1,10 +1,10 @@
 import math
 #import numpy.random as Random
 class RandomVariable:
-    def __init__(self, val1, val2 = None):
+    def __init__(self, val1, val2 = None, to_int=True):
         self._val1 = val1
         self._val2 = val2
-
+        self._to_int = to_int
     def generate(self):
         pass
     #def generateUniform(self):
