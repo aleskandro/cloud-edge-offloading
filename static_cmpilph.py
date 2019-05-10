@@ -20,7 +20,7 @@ from Random.ResourceDependentRandomVariable import *
 maxxCpu = 30
 maxxRam = 30000
 defaultOptions = 5
-def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=1, avgContainers=1, avgServiceProviders=50, K=1.8):
+def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=8, avgContainers=8, avgServiceProviders=50, K=1.5):
     global maxxCpu, maxxRam
 
     maxxCpu = avgCpu * avgServers
@@ -42,7 +42,7 @@ def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=1, avgContainers=1,
     cpuReq = UniformRandomVariable(0, K * (avgCpu * avgServers) / (avgContainers * avgServiceProviders), False)
     return servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
 
-def simpleHeuristic(maxOpt, make_graph=True):
+def simpleHeuristic(maxOpt, make_graph=True, placement_func=NetworkProvider().getInstance().makePlacement):
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
     bwOpts2 = pd.DataFrame(columns=["BandwidthSaving", "Options"])
     rrOpts2 = pd.DataFrame(columns=["Options", "CPU", "RAM"])
@@ -56,7 +56,7 @@ def simpleHeuristic(maxOpt, make_graph=True):
         generator.generate()  # TODO make multithread by not using a singleton (can I?)
         npp = NetworkProvider().getInstance()
         t1 = time.time()
-        npp.makePlacement(i)
+        placement_func(i)
         t2 = time.time()
         timing.loc[len(timing)] = {"Options": i, "Time": t2 - t1}
         bwOpts2.loc[len(bwOpts2)] = {"Options": i, "BandwidthSaving": npp.getBandwidthSaving()}
@@ -73,7 +73,7 @@ def simpleHeuristicVarServers(maxServers, make_graph=True):
     timing = pd.DataFrame(columns=["Options", "Time"])
     i = 1
     while (i <= maxServers + 1):
-        options = UniformRandomVariable(10, 10)
+        options = UniformRandomVariable(defaultOptions, defaultOptions)
         generate_input_datas(avgServers=i)
         generator = GeneratorForModel(servers, serviceProviders,
                                       options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq])
@@ -121,6 +121,20 @@ def groupedHeuristic(runs, maxOpts, function_to_call, make_graph = True):
     for i in range(0, runs):
         Random.seed(i)
         bwOpts, rrOpts, timing = function_to_call(maxOpts, False)
+        bwOptss = bwOptss.append(bwOpts)
+        rrOptss = rrOptss.append(rrOpts)
+        timingg = timingg.append(timing)
+    if make_graph:
+        makeGraph(bwOptss, rrOptss, timingg)
+    return bwOptss, rrOptss, timingg
+
+def groupedHeuristic2(runs, maxOpts, function_to_call, make_graph = True, func_placement=NetworkProvider().getInstance().makePlacement):
+    bwOptss = pd.DataFrame(columns=["Options", "BandwidthSaving"])
+    rrOptss = pd.DataFrame(columns=["Options", "CPU", "RAM"])
+    timingg = pd.DataFrame(columns=["Options", "Time"])
+    for i in range(0, runs):
+        Random.seed(i)
+        bwOpts, rrOpts, timing = function_to_call(maxOpts, False, func_placement)
         bwOptss = bwOptss.append(bwOpts)
         rrOptss = rrOptss.append(rrOpts)
         timingg = timingg.append(timing)
@@ -198,27 +212,7 @@ def groupedTogether(runs, maxOpts):
     bwOptsH, rrOptsH, timingH = groupedHeuristic(runs, maxOpts, simpleHeuristic, False)
     makeGraphTogether(bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH)
 
-def groupedTogetherSaveDifferentServersFixedCC(runs, maxOpts, sList):
-    for avgServer in sList:
-        generate_input_datas(avgServers=avgServer, avgContainers=1)
-        filename = "cmpILPH-Options-VaryingServers_%d_Servers" % avgServer
-        if len(glob.glob("results/%s*" % filename)) == 0:
-            bwOptsILP, rrOptsILP, timingILP = grouped(runs, maxOpts, simple, False)
-            bwOptsH, rrOptsH, timingH = groupedHeuristic(runs, maxOpts, simpleHeuristic, False)
-            save_to_file(filename, bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH)
-
-def groupedTogetherSaveFixedServersDiferentCC(runs, maxOpts, ccList):
-    for avgContainer in ccList:
-        generate_input_datas(avgServers=8, avgContainers=avgContainer)
-        filename = "cmpILPH-Options-VaryingContainers_%d_Containers" % avgContainer
-        os.system("rm -rf tresults/*")
-        if len(glob.glob("results/%s*" % filename)) == 0:
-            bwOptsILP, rrOptsILP, timingILP = grouped(runs, maxOpts, simple, False)
-            bwOptsH, rrOptsH, timingH = groupedHeuristic(runs, maxOpts, simpleHeuristic, False)
-            save_to_file(filename, bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH)
-
 def groupedTogetherSaveVarOptionsFixedServersFixedCC(runs, maxOpts):
-    generate_input_datas(avgServers=8, avgContainers=8)
     filename = "cmpILPH-Options"
     os.system("rm -rf tresults/*")
     if len(glob.glob("results/%s*" % filename)) == 0:
@@ -227,7 +221,6 @@ def groupedTogetherSaveVarOptionsFixedServersFixedCC(runs, maxOpts):
         save_to_file(filename, bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH)
 
 def groupedTogetherSaveFixedOptionsVarServersFixedCC(runs, maxOpts):
-    generate_input_datas(avgServers=1, avgContainers=8)
     filename = "cmpILPH-Servers"
     os.system("rm -rf tresults/*")
     if len(glob.glob("results/%s*" % filename)) == 0:
@@ -236,12 +229,19 @@ def groupedTogetherSaveFixedOptionsVarServersFixedCC(runs, maxOpts):
         save_to_file(filename, bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH)
 
 def groupedTogetherSaveFixedOptionsFixedServersVarCC(runs, maxOpts):
-    generate_input_datas(avgServers=1, avgContainers=8)
     filename = "cmpILPH-Containers"
     os.system("rm -rf tresults/*")
     if len(glob.glob("results/%s*" % filename)) == 0:
         bwOptsILP, rrOptsILP, timingILP = grouped(runs, maxOpts, simpleVarContainers, False)
         bwOptsH, rrOptsH, timingH = groupedHeuristic(runs, maxOpts, simpleHeuristicVarContainers, False)
+        save_to_file(filename, bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH)
+
+def naiveHeuristicSaveVarOptions(runs, maxOpts):
+    filename = "cmpHN-Options"
+    os.system("rm -rf tresults/*")
+    if len(glob.glob("results/%s*" % filename)) == 0:
+        bwOptsILP, rrOptsILP, timingILP = groupedHeuristic2(runs, maxOpts, simpleHeuristic, False, NetworkProvider().getInstance().make_placement_naive)  # Read naive
+        bwOptsH, rrOptsH, timingH = groupedHeuristic2(runs, maxOpts, simpleHeuristic, False)
         save_to_file(filename, bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH)
 
 def save_to_file(filename, bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH):
@@ -299,7 +299,7 @@ def makeGraphTogether(bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH
     ax.legend(loc="best")
     fig.savefig("results/output.png")
 
-def make_graph_from_file(filename, ilp_key, xlabel):
+def make_graph_from_file(filename, ilp_key, xlabel, ilp_label="optimal", h_label="heuristic"):
     fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(10,10))
     monochrome = (cycler('color', ['k']) * cycler('linestyle', ['-', '--', ':']) * cycler('marker',['^', ',', '.']))
     #for ax in axs:
@@ -315,7 +315,7 @@ def make_graph_from_file(filename, ilp_key, xlabel):
         bwOptsILP = bwOptsILP.groupby(ilp_key).agg([np.mean, confidenceInterval])
         ax.errorbar(bwOptsILP.index.values, bwOptsILP["BandwidthSaving"]["mean"],
                     yerr=bwOptsILP["BandwidthSaving"]["confidenceInterval"],
-                    label="Bandwidth saving (optimal)")
+                    label="Bandwidth saving (%s)" % ilp_label)
         max_y = max(math.ceil(bwOptsILP["BandwidthSaving"]["mean"].max()) + 2, max_y)
         ax.set_ylim([0, max_y])
     for file in glob.glob("results/" + filename + "*-bwOptsH.csv"):
@@ -324,8 +324,9 @@ def make_graph_from_file(filename, ilp_key, xlabel):
         bwOptsH = bwOptsH.groupby("Options").agg([np.mean, confidenceInterval])
         ax.errorbar(bwOptsH.index.values, bwOptsH["BandwidthSaving"]["mean"],
                     yerr=bwOptsH["BandwidthSaving"]["confidenceInterval"],
-                    label="Bandwidth saving (heuristic)")
-
+                    label="Bandwidth saving (%s)" % h_label)
+        max_y = max(math.ceil(bwOptsH["BandwidthSaving"]["mean"].max()) + 2, max_y)
+        ax.set_ylim([0, max_y])
     ax = axs[1]
     ax.set_ylim([0, 100])
     ax.set_ylabel("Available resources after placement (%)")
@@ -335,20 +336,20 @@ def make_graph_from_file(filename, ilp_key, xlabel):
         rrOptsILP = rrOptsILP.groupby(ilp_key).agg([np.mean, confidenceInterval])
         ax.bar(rrOptsILP.index.values - 3*width/8, rrOptsILP["CPU"]["mean"]*100, width/4,
                     yerr=rrOptsILP["CPU"]["confidenceInterval"]*100,
-                    label="CPU (optimal)")
+                    label="CPU (%s)" % ilp_label)
         ax.bar(rrOptsILP.index.values - 1*width/8, rrOptsILP["RAM"]["mean"]*100, width/4,
                     yerr=rrOptsILP["RAM"]["confidenceInterval"]*100,
-                    label="RAM (optimal)")
+                    label="RAM (%s)" % ilp_label)
 
     for file in glob.glob("results/" + filename + "*-rrOptsH.csv"):
         rrOptsH = pd.read_csv(file)
         rrOptsH = rrOptsH.groupby("Options").agg([np.mean, confidenceInterval])
         ax.bar(rrOptsH.index.values + 1*width/8, rrOptsH["CPU"]["mean"]*100, width/4,
                     yerr=rrOptsH["CPU"]["confidenceInterval"]*100,
-                    label="CPU (heuristic)")
+                    label="CPU (%s)" % h_label)
         ax.bar(rrOptsH.index.values + 3*width/8, rrOptsH["RAM"]["mean"]*100, width/4,
                     yerr=rrOptsH["RAM"]["confidenceInterval"]*100,
-                    label="RAM (heuristic)")
+                    label="RAM (%s)" % h_label)
 
     ax = axs[2]
     ax.set_ylabel("Time elapsed (s)")
@@ -357,14 +358,14 @@ def make_graph_from_file(filename, ilp_key, xlabel):
         timingILP = timingILP.groupby("Options").agg([np.mean, confidenceInterval])
         ax.errorbar(timingILP.index.values, timingILP["Time"]["mean"],
                     yerr=timingILP["Time"]["confidenceInterval"],
-                    label="Time elapsed (optimal)")
+                    label="Time elapsed (%s)" % ilp_label)
 
     for file in glob.glob("results/" + filename + "*-timingH.csv"):
         timingH = pd.read_csv(file)
         timingH = timingH.groupby("Options").agg([np.mean, confidenceInterval])
         ax.errorbar(timingH.index.values, timingH["Time"]["mean"],
                     yerr=timingH["Time"]["confidenceInterval"],
-                    label="Time elapsed (heuristic)")
+                    label="Time elapsed (%s)" % h_label)
     for ax in axs:
         ax.legend(loc="best")
         ax.set_xlabel(xlabel)
@@ -455,21 +456,25 @@ def fairness_graph2():
     ax.set_ylabel("RAM (Mb)")
     fig.subplots_adjust(wspace=0.35)
     fig.savefig("results/fairness.png")
-os.system("rm -rf tresults/*")
-#simple(200)
-#grouped(20, 10)
-#simpleHeuristic(10)
-#groupedTogether(20, 10)
 
-#groupedTogetherSaveDifferentServersFixedCC(20, 10, [1, 2, 4, 8])
-#groupedTogetherSaveFixedServersDiferentCC(20, 10, [1, 2, 4, 8])
-#make_graph_from_file("cmpILPH-Options-VaryingContainers", "containers")
-#make_graph_from_file("cmpILPH-Options-VaryingServers", "servers")
-#groupedTogetherSaveVarOptionsFixedServersFixedCC(20, 10)
-groupedTogetherSaveFixedOptionsVarServersFixedCC(20, 16)
-#groupedTogetherSaveFixedOptionsFixedServersVarCC(20, 16)
-make_graph_from_file("cmpILPH-Options", "Options", "Number of options per service providers")
-make_graph_from_file("cmpILPH-Servers", "Servers", "Number of servers")
-make_graph_from_file("cmpILPH-Containers", "Containers", "Number of containers per option")
-#generate_input_datas()
-#fairness_graph2()
+if __name__ == "__main__":
+    os.system("rm -rf tresults/*")
+    #simple(200)
+    #grouped(20, 10)
+    #simpleHeuristic(10)
+    #groupedTogether(20, 10)
+
+    #groupedTogetherSaveDifferentServersFixedCC(20, 10, [1, 2, 4, 8])
+    #groupedTogetherSaveFixedServersDiferentCC(20, 10, [1, 2, 4, 8])
+    #make_graph_from_file("cmpILPH-Options-VaryingContainers", "containers")
+    #make_graph_from_file("cmpILPH-Options-VaryingServers", "servers")
+    #groupedTogetherSaveVarOptionsFixedServersFixedCC(20, 10)
+    groupedTogetherSaveFixedOptionsVarServersFixedCC(20, 16)
+    #groupedTogetherSaveFixedOptionsFixedServersVarCC(20, 16)
+    make_graph_from_file("cmpILPH-Options", "Options", "Number of options per service providers")
+    make_graph_from_file("cmpILPH-Servers", "Servers", "Number of servers")
+    make_graph_from_file("cmpILPH-Containers", "Containers", "Number of containers per option")
+
+    #make_graph_from_file("cmpHN-Options", "Options", "Number of options per service providers", ilp_label="Naive")
+    #generate_input_datas()
+    #fairness_graph2()

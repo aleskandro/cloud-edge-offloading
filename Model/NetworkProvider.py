@@ -1,7 +1,7 @@
 import operator
 import matplotlib.pyplot as plt
-
-
+import numpy.random as Random
+import math
 class NetworkProvider:
     class __NetworkProvider:
         def clean(self):
@@ -123,6 +123,27 @@ class NetworkProvider:
                     datas[sp_index].append(sp.getOptions().index(sp.getDefaultOption()) + 1 if sp.getDefaultOption()
                         else 0)
             print(datas)
+
+        def make_placement_naive(self, placement_id=0): # Not for temporal execution
+            self.__clean_cluster()
+            for sp in self.getServiceProviders():
+                opt = sp.getOptions()[math.ceil(Random.uniform(0, len(sp.getOptions()) - 1))]
+                sp.setDefaultOption(opt)
+                for container in opt.getContainers():
+                    # Try to place to any host
+                    placed = False
+                    for host in self.getServers():
+                        if host.placeContainer(container):
+                            placed = True
+                            break
+                    if not placed: # revert
+                        for container in opt.getContainers():
+                            if container.getServer():
+                                container.getServer().unplaceContainer(container)
+                        break
+
+
+
             #self.__print_datas(datas, placement_id)
 #        def makePlacement(self, placement_id):
 #            convergence = False
