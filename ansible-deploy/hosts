@@ -1,0 +1,2 @@
+[PythonFog]
+pythonfog ansible_host=151.97.6.165 ansible_port=2222

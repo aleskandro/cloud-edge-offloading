@@ -1,0 +1,5 @@
+- name: Install dependencies for fog cloud offloading simulations
+  hosts: PythonFog
+  remote_user: root
+  roles:
+    - pythonfog
