@@ -3,6 +3,7 @@ import numpy as np
 import math
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter, FuncFormatter
 import os
 import time
 import glob
@@ -299,7 +300,7 @@ def makeGraphTogether(bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH
     ax.legend(loc="best")
     fig.savefig("results/output.png")
 
-def make_graph_from_file(filename, ilp_key, xlabel, ilp_label="optimal", h_label="heuristic"):
+def make_graph_from_file(filename, ilp_key, xlabel, ilp_label="ILP", h_label="MOEPH"):
     fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(10,10))
     monochrome = (cycler('color', ['k']) * cycler('linestyle', ['-', '--', ':']) * cycler('marker',['^', ',', '.']))
     #for ax in axs:
@@ -315,7 +316,7 @@ def make_graph_from_file(filename, ilp_key, xlabel, ilp_label="optimal", h_label
         bwOptsILP = bwOptsILP.groupby(ilp_key).agg([np.mean, confidenceInterval])
         ax.errorbar(bwOptsILP.index.values, bwOptsILP["BandwidthSaving"]["mean"],
                     yerr=bwOptsILP["BandwidthSaving"]["confidenceInterval"],
-                    label="Bandwidth saving (%s)" % ilp_label)
+                    label="Utility (%s)" % ilp_label)
         max_y = max(math.ceil(bwOptsILP["BandwidthSaving"]["mean"].max()) + 2, max_y)
         ax.set_ylim([0, max_y])
     for file in glob.glob("results/" + filename + "*-bwOptsH.csv"):
@@ -324,32 +325,32 @@ def make_graph_from_file(filename, ilp_key, xlabel, ilp_label="optimal", h_label
         bwOptsH = bwOptsH.groupby("Options").agg([np.mean, confidenceInterval])
         ax.errorbar(bwOptsH.index.values, bwOptsH["BandwidthSaving"]["mean"],
                     yerr=bwOptsH["BandwidthSaving"]["confidenceInterval"],
-                    label="Bandwidth saving (%s)" % h_label)
+                    label="Utility (%s)" % h_label)
         max_y = max(math.ceil(bwOptsH["BandwidthSaving"]["mean"].max()) + 2, max_y)
         ax.set_ylim([0, max_y])
     ax = axs[1]
     ax.set_ylim([0, 100])
     ax.set_ylabel("Available resources after placement (%)")
-    width = 0.35
+    width = 0.5
     for file in glob.glob("results/" + filename + "*-rrOptsILP.csv"):
         rrOptsILP = pd.read_csv(file)
         rrOptsILP = rrOptsILP.groupby(ilp_key).agg([np.mean, confidenceInterval])
-        ax.bar(rrOptsILP.index.values - 3*width/8, rrOptsILP["CPU"]["mean"]*100, width/4,
+        ax.bar(rrOptsILP.index.values - 3*width*np.array(rrOptsILP.index.values)/8, rrOptsILP["CPU"]["mean"]*100, width*np.array(rrOptsILP.index.values)/4,
                     yerr=rrOptsILP["CPU"]["confidenceInterval"]*100,
-                    label="CPU (%s)" % ilp_label)
-        ax.bar(rrOptsILP.index.values - 1*width/8, rrOptsILP["RAM"]["mean"]*100, width/4,
+                    label="CPU (%s)" % ilp_label, align="edge")
+        ax.bar(rrOptsILP.index.values - 1*width*np.array(rrOptsILP.index.values)/8, rrOptsILP["RAM"]["mean"]*100, width*np.array(rrOptsILP.index.values)/4,
                     yerr=rrOptsILP["RAM"]["confidenceInterval"]*100,
-                    label="RAM (%s)" % ilp_label)
+                    label="RAM (%s)" % ilp_label, align="edge")
 
     for file in glob.glob("results/" + filename + "*-rrOptsH.csv"):
         rrOptsH = pd.read_csv(file)
         rrOptsH = rrOptsH.groupby("Options").agg([np.mean, confidenceInterval])
-        ax.bar(rrOptsH.index.values + 1*width/8, rrOptsH["CPU"]["mean"]*100, width/4,
+        ax.bar(rrOptsH.index.values + 1*width*np.array(rrOptsH.index.values)/8, rrOptsH["CPU"]["mean"]*100, width*np.array(rrOptsH.index.values)/4,
                     yerr=rrOptsH["CPU"]["confidenceInterval"]*100,
-                    label="CPU (%s)" % h_label)
-        ax.bar(rrOptsH.index.values + 3*width/8, rrOptsH["RAM"]["mean"]*100, width/4,
+                    label="CPU (%s)" % h_label, align="edge")
+        ax.bar(rrOptsH.index.values + 3*width*np.array(rrOptsH.index.values)/8, rrOptsH["RAM"]["mean"]*100, width*np.array(rrOptsH.index.values)/4,
                     yerr=rrOptsH["RAM"]["confidenceInterval"]*100,
-                    label="RAM (%s)" % h_label)
+                    label="RAM (%s)" % h_label, align="edge")
 
     ax = axs[2]
     ax.set_ylabel("Time elapsed (s)")
@@ -369,6 +370,9 @@ def make_graph_from_file(filename, ilp_key, xlabel, ilp_label="optimal", h_label
     for ax in axs:
         ax.legend(loc="best")
         ax.set_xlabel(xlabel)
+        ax.set_xscale('log', basex=2)
+        formatter = FuncFormatter(lambda y, _: '{:.16g}'.format(y))
+        ax.xaxis.set_major_formatter(formatter)
 
     fig.savefig("results/%s.png" % filename)
 
@@ -468,9 +472,9 @@ if __name__ == "__main__":
     #groupedTogetherSaveFixedServersDiferentCC(20, 10, [1, 2, 4, 8])
     #make_graph_from_file("cmpILPH-Options-VaryingContainers", "containers")
     #make_graph_from_file("cmpILPH-Options-VaryingServers", "servers")
-    #groupedTogetherSaveVarOptionsFixedServersFixedCC(20, 10)
+    groupedTogetherSaveVarOptionsFixedServersFixedCC(20, 10)
     groupedTogetherSaveFixedOptionsVarServersFixedCC(20, 16)
-    #groupedTogetherSaveFixedOptionsFixedServersVarCC(20, 16)
+    groupedTogetherSaveFixedOptionsFixedServersVarCC(20, 16)
     make_graph_from_file("cmpILPH-Options", "Options", "Number of options per service providers")
     make_graph_from_file("cmpILPH-Servers", "Servers", "Number of servers")
     make_graph_from_file("cmpILPH-Containers", "Containers", "Number of containers per option")
