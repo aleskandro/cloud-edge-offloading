@@ -1,3 +1,11 @@
+- name: Add testing repository
+  apt_repository:
+    repo: deb http://ftp.de.debian.org/debian testing main
+    state: present
+
+- name: Setting defualt realeas stable
+  command: "echo 'APT::Default-Release \"stable\";' | tee -a /etc/apt/apt.conf.d/00local"
+
 - name: install glpk
   package:
     name: glpk-utils
@@ -13,6 +21,22 @@
     - python3
     - python3-pip
     - python3-setuptools
+
+- name: Installing python3.6
+  apt:
+    name: python3
+    state: present
+    default_release: testing
+    update_cache: yes
+
+- name: Install utility packages
+  package:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - htop
+    - psmisc
+    - screen
 
 - name: install python3 project deps
   command: "pip3 install -r /root/cloud-edge-offloading/requirements.txt"
