@@ -20,7 +20,7 @@ from Random.ResourceDependentRandomVariable import *
 maxxCpu = 30
 maxxRam = 30000
 defaultOptions = 5
-def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=8, avgContainers=8, avgServiceProviders=50, K=1.5):
+def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=8, avgContainers=8, avgServiceProviders=50, K=2):
     global maxxCpu, maxxRam
 
     maxxCpu = avgCpu * avgServers
