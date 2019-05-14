@@ -52,4 +52,5 @@ def make_radar_chart(df):
 
 
 if __name__ == "__main__":
+    print(df)
     make_radar_chart(df)
