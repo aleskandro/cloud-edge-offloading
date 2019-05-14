@@ -13,7 +13,7 @@ maxxRam = 30000
 defaultOptions = 5
 Random.seed(5)
 
-def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=8, avgContainers=8, avgServiceProviders=50, K=1.8):
+def generate_input_datas(avgCpu=1, avgRam=1, avgServers=1, avgContainers=8, avgServiceProviders=50, K=1.8):
     global maxxCpu, maxxRam
 
     maxxCpu = avgCpu * avgServers
@@ -57,7 +57,7 @@ def simpleHeuristic(maxOpt, make_graph=True):
     return bwOpts2, rrOpts2, timing
 
 
-def make_datas_var_options_var_sps(maxSPs=160, maxOpts=8):
+def make_datas_var_options_var_sps(maxSPs=160, maxOpts=8, ret_func=NetworkProvider().getInstance().getBandwidthSaving, filename="results/radar_plot.csv"):
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
     generate_input_datas()
     npp = NetworkProvider().getInstance()
@@ -91,13 +91,13 @@ def make_datas_var_options_var_sps(maxSPs=160, maxOpts=8):
                                             options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq], K=1)
             generator.generate()  # TODO make multithread by not using a singleton (can I?)
             npp.makePlacement(1)
-            df.loc[df["options"] == opts, column_label(sps)] = npp.getBandwidthSaving()
+            df.loc[df["options"] == opts, column_label(sps)] = ret_func()
             print(df)
 
-    df.to_csv("results/radar_plot.csv", index=False)
+    df.to_csv(filename, index=False)
 
-def make_radar_chart():
-    df = pd.read_csv("results/radar_plot.csv", index_col=0)
+def make_radar_chart(filename="results/radar_plot.csv"):
+    df = pd.read_csv(filename, index_col=0)
     print(df)
     radar_chart.make_radar_chart(df)
 
@@ -107,8 +107,16 @@ def make_radar_chart():
 #simpleHeuristic(25)
 #groupedTogether(20, 10)
 #radar_chart()
-if not len(glob.glob("results/radar_plot.csv")) > 0:
-    make_datas_var_options_var_sps()
+if __name__ == "__main__":
+    Random.seed(6)
+    if not len(glob.glob("results/radar_plot.csv")) > 0:
+        make_datas_var_options_var_sps()
 
-make_radar_chart()
+    make_radar_chart()
 
+    Random.seed(6)
+    if not len(glob.glob("results/radar_plot_relative.csv")) > 0:
+        make_datas_var_options_var_sps(filename="results/radar_plot_relative.csv", ret_func=NetworkProvider()
+                                       .getInstance().getRelativeBandwidthSaving)
+
+    make_radar_chart("results/radar_plot_relative.csv")

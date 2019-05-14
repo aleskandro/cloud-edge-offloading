@@ -64,6 +64,9 @@ class ServiceProvider:
         if len(subset) == 0: return None
         return max(subset, key=lambda opt: opt.getEfficiency())
 
+    def getMaxBsOption(self):
+        return max(self.__options, key=lambda x: x.getBandwidthSaving())
+
     def __str__(self):
         return "Service provider: \n" + \
                "Default option: %s\nOptions: %s\n" % (str(self.__defaultOption), [str(item) for item in self.__options])
