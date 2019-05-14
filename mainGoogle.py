@@ -165,9 +165,11 @@ def groupedTogether(runs, maxOpts):
     bwOptsH, rrOptsH, timingH = groupedHeuristic(runs, maxOpts, False)
     makeGraphTogether(bwOptsILP, rrOptsILP, timingILP, bwOptsH, rrOptsH, timingH)
 
-os.system("rm -rf results/*")
+
+#os.system("rm -rf results/*")
 #simple(200)
 #grouped(20, 10)
-simpleHeuristic(25)
+#simpleHeuristic(25)
 #groupedTogether(20, 10)
+#radar_chart()
 
