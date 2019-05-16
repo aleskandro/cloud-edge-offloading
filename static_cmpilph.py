@@ -21,7 +21,7 @@ from Random.ResourceDependentRandomVariable import *
 maxxCpu = 30
 maxxRam = 30000
 defaultOptions = 5
-def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=8, avgContainers=8, avgServiceProviders=50, K=2):
+def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=8, avgContainers=8, avgServiceProviders=50, K=1.8):
     global maxxCpu, maxxRam
 
     maxxCpu = avgCpu * avgServers
@@ -472,6 +472,7 @@ if __name__ == "__main__":
     #groupedTogetherSaveFixedServersDiferentCC(20, 10, [1, 2, 4, 8])
     #make_graph_from_file("cmpILPH-Options-VaryingContainers", "containers")
     #make_graph_from_file("cmpILPH-Options-VaryingServers", "servers")
+    generate_input_datas()
     groupedTogetherSaveVarOptionsFixedServersFixedCC(20, 10)
     groupedTogetherSaveFixedOptionsVarServersFixedCC(20, 16)
     groupedTogetherSaveFixedOptionsFixedServersVarCC(20, 16)
