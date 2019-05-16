@@ -17,7 +17,7 @@ if __name__ == "__main__":
         '160 SPs': [28, 15, 32, 14]
     })
 
-def make_radar_chart(df):
+def make_radar_chart(df, filename):
     # number of variable (Service providers)
     categories = list(df)[1:]
     N = len(categories)
@@ -48,7 +48,7 @@ def make_radar_chart(df):
         #break
     ax.legend()
     #plt.show()
-    fig.savefig("results/radar_plot.png")
+    fig.savefig(filename)
 
 
 if __name__ == "__main__":

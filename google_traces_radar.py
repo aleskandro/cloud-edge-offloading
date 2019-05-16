@@ -97,9 +97,9 @@ def make_datas_var_options_var_sps(maxSPs=160, maxOpts=8, ret_func=NetworkProvid
     df.to_csv(filename, index=False)
 
 def make_radar_chart(filename="results/radar_plot.csv"):
-    df = pd.read_csv(filename, index_col=0)
+    df = pd.read_csv(filename)
     print(df)
-    radar_chart.make_radar_chart(df)
+    radar_chart.make_radar_chart(df, filename.replace("csv", "png"))
 
 #os.system("rm -rf results/*")
 #simple(200)
