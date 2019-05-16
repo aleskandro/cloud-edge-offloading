@@ -1,5 +1,6 @@
 param nbServiceProviders;
 param nbServers;
+param K;
 param nbResources;
 param nbOptions{i in 1..nbServiceProviders};
 param bandwidthSaving{i in 1..nbServiceProviders, j in 1..nbOptions[i]};
@@ -55,7 +56,7 @@ param avgContainers := (sum{i in 1..nbServiceProviders} ((sum {j in 1..nbOptions
 display avgOptions;
 
 
-printf "%f,%f,%f,%f\n", nbServers, avgContainers, avgOptions, opt >> "tresults/bandwidthByAvgOptions.csv";
+printf "%f,%f,%f,%f,%f\n", nbServers, avgContainers, avgOptions, K, opt >> "tresults/bandwidthByAvgOptions.csv";
 
 display totalResources;
 printf{r in 1..nbResources} "%f,", totalResources[r] >> "tresults/bandwidthByResources.csv";
@@ -63,6 +64,6 @@ printf "%f\n", opt >> "tresults/bandwidthByResources.csv";
 
 display remainingTotalResources;
 
-printf "%f,%f,%f", nbServers, avgContainers, avgOptions >> "tresults/remainingResourcesByAvgOptions.csv";
+printf "%f,%f,%f, %f", nbServers, avgContainers, avgOptions, K >> "tresults/remainingResourcesByAvgOptions.csv";
 printf{r in 1..nbResources} ",%f", remainingTotalResources[r] >> "tresults/remainingResourcesByAvgOptions.csv";
 printf "\n" >> "tresults/remainingResourcesByAvgOptions.csv";

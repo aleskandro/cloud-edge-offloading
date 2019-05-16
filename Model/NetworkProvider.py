@@ -40,6 +40,14 @@ class NetworkProvider:
                 ret += sp.getDefaultOption().getBandwidthSaving() if sp.getDefaultOption() else 0
             return ret
 
+        def getRelativeBandwidthSaving(self):
+            ret = self.getBandwidthSaving()
+            max_bs = 0
+            for sp in self.__serviceProviders:
+                max_bs += sp.getMaxBsOption().getBandwidthSaving()
+            #return ret / max_bs
+            return ret / len(self.__serviceProviders)
+
         def getRemainingResources(self):
             cpu = 0
             ram = 0
@@ -122,7 +130,7 @@ class NetworkProvider:
                 for sp_index, sp in enumerate(self.__serviceProviders):
                     datas[sp_index].append(sp.getOptions().index(sp.getDefaultOption()) + 1 if sp.getDefaultOption()
                         else 0)
-            print(datas)
+            #print(datas)
 
         def make_placement_naive(self, placement_id=0): # Not for temporal execution
             self.__clean_cluster()
