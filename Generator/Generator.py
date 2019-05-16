@@ -1,5 +1,5 @@
 class Generator:
-    def __init__(self, servers, serviceProviders, options, containers, resources, bandwidth, reqResources, execution_time = None, K = None):
+    def __init__(self, servers, serviceProviders, options, containers, resources, bandwidth, reqResources, execution_time = None, K = 0):
         self.servers = servers
         self.serviceProviders = serviceProviders
         self.options = options
@@ -74,6 +74,7 @@ class Generator:
 
     def _writeToFile(self, availableResources, options, containers, requiredResources, bandwidthSaving):
         f = open("scenario.dat", "w+")
+        f.write(f"param K := {self._K};\n")
         f.write(f"param nbServers := {self.nbServers};\n")
         f.write(f"param nbResources := {self.nbResources};\n")
         f.write(f"param nbServiceProviders := {self.nbServiceProviders};\n")
