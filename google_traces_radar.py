@@ -154,18 +154,19 @@ def make_csv_from_raw(filename="results/radar_plot_raw.csv", relative=True):
 #groupedTogether(20, 10)
 #radar_chart()
 if __name__ == "__main__":
-    Random.seed(6)
-    if not len(glob.glob("results/radar_plot.csv")) > 0:
-        make_datas_var_options_var_sps()
+    # Radar plots with single run
+    #Random.seed(6)
+    #if not len(glob.glob("results/radar_plot.csv")) > 0:
+    #    make_datas_var_options_var_sps()
 
-    make_radar_chart()
+    #make_radar_chart()
 
-    Random.seed(6)
-    if not len(glob.glob("results/radar_plot_relative.csv")) > 0:
-        make_datas_var_options_var_sps(filename="results/radar_plot_relative.csv", ret_func=NetworkProvider()
-                                       .getInstance().getRelativeBandwidthSaving)
+    #Random.seed(6)
+    #if not len(glob.glob("results/radar_plot_relative.csv")) > 0:
+    #    make_datas_var_options_var_sps(filename="results/radar_plot_relative.csv", ret_func=NetworkProvider()
+    #                                   .getInstance().getRelativeBandwidthSaving)
 
-    make_radar_chart("results/radar_plot_relative.csv")
+    #make_radar_chart("results/radar_plot_relative.csv")
 
     if not len(glob.glob("results/radar_plot_raw.csv")) > 0:
         make_datas_var_options_var_sps_raw()
