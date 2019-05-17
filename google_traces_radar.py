@@ -1,5 +1,6 @@
 import pandas as pd
 import time
+import numpy as np
 
 from Generator.GeneratorForModelGoogle import *
 from Random.NormalRandomVariable import *
@@ -56,6 +57,30 @@ def simpleHeuristic(maxOpt, make_graph=True):
         k.loc[len(k)] = {"ServiceProviders": i, "K": generator.getK()}
     return bwOpts2, rrOpts2, timing
 
+def make_datas_var_options_var_sps_raw(maxSPs=160, maxOpts=8, max_runs=20, filename="results/radar_plot_raw.csv"):
+    global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
+    generate_input_datas()
+    npp = NetworkProvider().getInstance()
+    df = pd.DataFrame(columns=["options", "service_providers", "utility", "K"])
+    for i in range(max_runs):
+        Random.seed(i*2)
+        j = 10
+        while j <= maxSPs:
+            serviceProviders = UniformRandomVariable(j, j)
+            k = 1
+            while k <= maxOpts:
+                options = UniformRandomVariable(k, k)
+                generator = GeneratorForModelGoogle(servers, serviceProviders,
+                                            options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq], K=1)
+                generator.generate()  # TODO make multithread by not using a singleton (can I?)
+                npp.makePlacement(1)
+                df.loc[len(df)] = {"options": k, "service_providers": j, "utility": npp.getBandwidthSaving(),
+                                   "K": generator.getK()}
+                print(df)
+                k *= 2
+            j *= 2
+    df.to_csv(filename)
+
 
 def make_datas_var_options_var_sps(maxSPs=160, maxOpts=8, ret_func=NetworkProvider().getInstance().getBandwidthSaving, filename="results/radar_plot.csv"):
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
@@ -101,6 +126,27 @@ def make_radar_chart(filename="results/radar_plot.csv"):
     print(df)
     radar_chart.make_radar_chart(df, filename.replace("csv", "png"))
 
+def make_csv_from_raw(filename="results/radar_plot_raw.csv", relative=True):
+    df = pd.read_csv(filename)
+    df = df.groupby(["options", "service_providers"]).agg(np.mean)
+    def column_label(i):
+        return "%d SPs" % i
+
+    df_out = pd.DataFrame(columns=["options"] + [column_label(i) for i in list(df.index.levels[1])])
+    for i in list(df.index.levels[0]): # options
+        my_dict = {"options": i}
+        for j in list(df.index.levels[1]): # service_providers
+            my_dict[column_label(j)] = df.iloc[(df.index.get_level_values("options") == i)
+                                 & (df.index.get_level_values("service_providers") == j)]["utility"].values[0]
+
+            if relative:
+                my_dict[column_label(j)] = my_dict[column_label(j)] / j
+
+        print(my_dict)
+        df_out.loc[len(df_out)] = my_dict
+
+    df_out.to_csv("results/radar_plot_2.csv")
+
 #os.system("rm -rf results/*")
 #simple(200)
 #grouped(20, 10)
@@ -120,3 +166,9 @@ if __name__ == "__main__":
                                        .getInstance().getRelativeBandwidthSaving)
 
     make_radar_chart("results/radar_plot_relative.csv")
+
+    if not len(glob.glob("results/radar_plot_raw.csv")) > 0:
+        make_datas_var_options_var_sps_raw()
+
+    make_csv_from_raw()
+    make_radar_chart("results/radar_plot_2.csv")
