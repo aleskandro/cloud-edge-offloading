@@ -17,13 +17,12 @@ from Random.ResourceDependentRandomVariable import *
 maxxCpu = 30
 maxxRam = 30000
 
-
 def confidence_interval(x):
     return 1.96 * x.std() / math.sqrt(x.count())
 
 
 def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=8, avgContainers=8, avgServiceProviders=50, avgOptions=5,
-                         K=2):
+                         K=1.8):
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq, maxxCpu, maxxRam, options, Kk
 
     Kk = K
