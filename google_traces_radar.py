@@ -145,7 +145,7 @@ def make_csv_from_raw(filename="results/radar_plot_raw.csv", relative=True):
         print(my_dict)
         df_out.loc[len(df_out)] = my_dict
 
-    df_out.to_csv("results/radar_plot_2.csv")
+    df_out.to_csv("results/radar_plot_2.csv", index=False)
 
 #os.system("rm -rf results/*")
 #simple(200)

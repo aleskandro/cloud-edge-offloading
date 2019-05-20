@@ -97,7 +97,7 @@ def simple_ilp(varying_func, key, iterations):
 
 
 def grouped_ilp(runs, varying_func, key, iterations):
-    timingg = pd.DataFrame(columns=["Options", "Time"])
+    timingg = pd.DataFrame(columns=[key, "Time"])
     for i in range(0, runs):
         Random.seed(i)
         timing = simple_ilp(varying_func, key, iterations)
@@ -131,7 +131,7 @@ def save_to_file(filename, suffix, bwOpts, rrOpts, timing):
     timing.to_csv("results/%s-timing%s.csv" % (filename, suffix))
 
 
-def make_graph_from_file(filename, group_key, xlabel):
+def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
     fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(10,10))
     #monochrome = (cycler('color', ['k']) * cycler('linestyle', ['-', '--', ':']) * cycler('marker',['^', ',', '.']))
     #for ax in axs:
@@ -154,22 +154,34 @@ def make_graph_from_file(filename, group_key, xlabel):
             ax.set_ylim([0, max_y])
 
     ax = axs[1]
-    ax.set_ylim([0, 30])
+    max_y = 30
     ax.set_ylabel("Available resources after placement (%)")
-    width = 0.5
     start = -5
     for label, regex in [("ILP", "*-rrOptsILP.csv"), ("MOEPH", "*-rrOptsH.csv"), ("Naive", "*-rrOptsN.csv")]:
         for file in glob.glob("results/" + filename + regex):
             rrOpts = pd.read_csv(file)
             rrOpts = rrOpts.groupby(group_key).agg([np.mean, confidence_interval])
-            ax.bar(rrOpts.index.values + start*width*np.array(rrOpts.index.values)/12, rrOpts["CPU"]["mean"]*100, width*np.array(rrOpts.index.values)/6,
-                        yerr=rrOpts["CPU"]["confidence_interval"]*100,
-                        label="CPU (%s)" % label, align="edge")
-            start += 2
-            ax.bar(rrOpts.index.values + start*width*np.array(rrOpts.index.values)/12, rrOpts["RAM"]["mean"]*100, width*np.array(rrOpts.index.values)/6,
-                        yerr=rrOpts["RAM"]["confidence_interval"]*100,
-                        label="RAM (%s)" % label, align="edge")
-            start += 2
+            max_y = max(max_y, rrOpts["CPU"]["mean"].max()*100 + 5)
+            max_y = max(max_y, rrOpts["RAM"]["mean"].max()*100 + 5)
+            if log:
+                ax.bar(rrOpts.index.values + start*width*np.array(rrOpts.index.values)/12, rrOpts["CPU"]["mean"]*100, width*np.array(rrOpts.index.values)/6,
+                            yerr=rrOpts["CPU"]["confidence_interval"]*100,
+                            label="CPU (%s)" % label, align="edge")
+                start += 2
+                ax.bar(rrOpts.index.values + start*width*np.array(rrOpts.index.values)/12, rrOpts["RAM"]["mean"]*100, width*np.array(rrOpts.index.values)/6,
+                            yerr=rrOpts["RAM"]["confidence_interval"]*100,
+                            label="RAM (%s)" % label, align="edge")
+                start += 2
+            else:
+                ax.bar(rrOpts.index.values + start*width/12, rrOpts["CPU"]["mean"]*100, width/6,
+                            yerr=rrOpts["CPU"]["confidence_interval"]*100,
+                            label="CPU (%s)" % label, align="edge")
+                start += 2
+                ax.bar(rrOpts.index.values + start*width/12, rrOpts["RAM"]["mean"]*100, width/6,
+                            yerr=rrOpts["RAM"]["confidence_interval"]*100,
+                            label="RAM (%s)" % label, align="edge")
+                start += 2
+    ax.set_ylim([0, max_y])
 
 
     ax = axs[2]
@@ -185,7 +197,8 @@ def make_graph_from_file(filename, group_key, xlabel):
     for ax in axs:
         ax.legend(loc="best")
         ax.set_xlabel(xlabel)
-        ax.set_xscale('log', basex=2)
+        if log:
+            ax.set_xscale('log', basex=2)
         formatter = FuncFormatter(lambda y, _: '{:.16g}'.format(y))
         ax.xaxis.set_major_formatter(formatter)
 
@@ -201,4 +214,4 @@ if __name__ == "__main__":
     make_graph_from_file("cmpILPH-Options", "Options", "Number of options per service providers")
     make_graph_from_file("cmpILPH-Servers", "Servers", "Number of servers")
     make_graph_from_file("cmpILPH-Containers", "Containers", "Number of containers per option")
-    make_graph_from_file("cmpILPH-K", "K", "K")
+    make_graph_from_file("cmpILPH-K", "K", "K", log=False, width=0.15)
