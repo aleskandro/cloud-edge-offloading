@@ -50,7 +50,7 @@ class GeneratorForModelGoogle(Generator):
         #self._generateContainers()
         #self._generateRequiredResources()
         self.generateServiceProviders()
-        self._generateBandwidthSaving()
+        #self._generateBandwidthSaving()
 
     def generateServiceProviders(self):
         np = NetworkProvider().getInstance()

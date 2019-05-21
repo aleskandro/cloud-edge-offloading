@@ -23,12 +23,13 @@ def confidence_interval(x):
 
 def generate_input_datas(avgCpu=32, avgRam=32768, avgServers=8, avgContainers=8, avgServiceProviders=50, avgOptions=5,
                          K=1.8):
-    global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq, maxxCpu, maxxRam, options, Kk
+    global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq, maxxCpu, maxxRam, options, Kk, aavgServiceProviders
 
     Kk = K
 
     maxxCpu = avgCpu * avgServers
     maxxRam = avgRam * avgServers
+    aavgServiceProviders = avgServiceProviders
 
     servers = UniformRandomVariable(avgServers, avgServers)
     ram = NormalRandomVariable(avgRam, 0)
@@ -132,6 +133,7 @@ def save_to_file(filename, suffix, bwOpts, rrOpts, timing):
 
 
 def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
+    global aavgServiceProviders
     fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(10,10))
     #monochrome = (cycler('color', ['k']) * cycler('linestyle', ['-', '--', ':']) * cycler('marker',['^', ',', '.']))
     #for ax in axs:
@@ -140,24 +142,24 @@ def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
     ax = axs[0]
     max_y = 0
     ax.set_ylim([0, max_y])
-    ax.set_ylabel("Utility")
-    for label, regex in [("Utility (ILP)", "*-bwOptsILP.csv"), ("Utility (MOEPH)", "*-bwOptsH.csv"), ("Utility (Naive)", "*-bwOptsN.csv")]:
+    ax.set_ylabel("Utility (%)")
+    for label, regex in [("Utility (Optimal)", "*-bwOptsILP.csv"), ("Utility (EdgeMORE)", "*-bwOptsH.csv"), ("Utility (Naive)", "*-bwOptsN.csv")]:
         for file in glob.glob("results/" + filename + regex):
             print(label, regex)
             bwOpts = pd.read_csv(file)
             bwOpts["BandwidthSaving"] = bwOpts["BandwidthSaving"].astype(float)
             bwOpts = bwOpts.groupby(group_key).agg([np.mean, confidence_interval])
-            ax.errorbar(bwOpts.index.values, bwOpts["BandwidthSaving"]["mean"],
-                        yerr=bwOpts["BandwidthSaving"]["confidence_interval"],
+            ax.errorbar(bwOpts.index.values, 100*bwOpts["BandwidthSaving"]["mean"]/aavgServiceProviders,
+                        yerr=100*bwOpts["BandwidthSaving"]["confidence_interval"]/aavgServiceProviders,
                         label=label)
-            max_y = max(math.ceil(bwOpts["BandwidthSaving"]["mean"].max()) + 2, max_y)
-            ax.set_ylim([0, max_y])
-
+            #max_y = max(math.ceil(bwOpts["BandwidthSaving"]["mean"].max()/aavgServiceProviders) + 2, max_y)
+            #ax.set_ylim([0, max_y])
+    ax.set_ylim([0, 100])
     ax = axs[1]
     max_y = 30
     ax.set_ylabel("Available resources after placement (%)")
     start = -5
-    for label, regex in [("ILP", "*-rrOptsILP.csv"), ("MOEPH", "*-rrOptsH.csv"), ("Naive", "*-rrOptsN.csv")]:
+    for label, regex in [("Optimal", "*-rrOptsILP.csv"), ("EdgeMORE", "*-rrOptsH.csv"), ("Naive", "*-rrOptsN.csv")]:
         for file in glob.glob("results/" + filename + regex):
             rrOpts = pd.read_csv(file)
             rrOpts = rrOpts.groupby(group_key).agg([np.mean, confidence_interval])
@@ -186,7 +188,7 @@ def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
 
     ax = axs[2]
     ax.set_ylabel("Time elapsed (s)")
-    for label, regex in [("ILP", "*-timingILP.csv"), ("MOEPH", "*-timingH.csv"), ("Naive", "*-timingN.csv")]:
+    for label, regex in [("Optimal", "*-timingILP.csv"), ("EdgeMORE", "*-timingH.csv"), ("Naive", "*-timingN.csv")]:
         for file in glob.glob("results/" + filename + regex):
             timingILP = pd.read_csv(file)
             timingILP = timingILP.groupby(group_key).agg([np.mean, confidence_interval])
@@ -207,6 +209,7 @@ def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
 
 if __name__ == "__main__":
     os.system("rm -rf tresults/*")
+    generate_input_datas()
     execute_simulations(20, lambda x: generate_input_datas(avgOptions=x), "Options", [1, 2, 4, 8])
     execute_simulations(20, lambda x: generate_input_datas(avgServers=x), "Servers", [1, 2, 4, 8, 16])
     execute_simulations(20, lambda x: generate_input_datas(avgContainers=x), "Containers", [1, 2, 4, 8, 16])

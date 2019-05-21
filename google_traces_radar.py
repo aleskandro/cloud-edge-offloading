@@ -14,7 +14,7 @@ maxxRam = 30000
 defaultOptions = 5
 Random.seed(5)
 
-def generate_input_datas(avgCpu=1, avgRam=1, avgServers=1, avgContainers=8, avgServiceProviders=50, K=1.8):
+def generate_input_datas(avgCpu=1, avgRam=1, avgServers=8, avgContainers=8, avgServiceProviders=50, K=1.8):
     global maxxCpu, maxxRam
 
     maxxCpu = avgCpu * avgServers
@@ -63,7 +63,7 @@ def make_datas_var_options_var_sps_raw(maxSPs=160, maxOpts=8, max_runs=20, filen
     npp = NetworkProvider().getInstance()
     df = pd.DataFrame(columns=["options", "service_providers", "utility", "K"])
     for i in range(max_runs):
-        Random.seed(i*2)
+        Random.seed((i+1)*3)
         j = 10
         while j <= maxSPs:
             serviceProviders = UniformRandomVariable(j, j)
