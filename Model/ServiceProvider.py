@@ -50,17 +50,18 @@ class ServiceProvider:
         for opt in self.__options:
             opt.computeEfficiency()
 
-    def __getCandidateOptions(self):
+    def __getCandidateOptions(self, options=None):
         subset = []
-        for opt in self.__options:
+        opts = self.__options if options is None else self.__options[0:options]
+        for opt in opts:
             bs = self.__defaultOption.getBandwidthSaving() if self.__defaultOption else 0
             if opt.getBandwidthSaving() > bs:
                 subset.append(opt)
                 opt.computeEfficiency()
         return subset
 
-    def getBestOption(self):
-        subset = self.__getCandidateOptions()
+    def getBestOption(self, options=None):
+        subset = self.__getCandidateOptions(options=options)
         if len(subset) == 0: return None
         return max(subset, key=lambda opt: opt.getEfficiency())
 

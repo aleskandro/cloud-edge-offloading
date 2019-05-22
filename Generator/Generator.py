@@ -49,7 +49,7 @@ class Generator:
                         requiredResources[i,j,k,l] = self.reqResources[l].generate()
         return requiredResources
 
-    def __printDict(self, theDict):
+    def _printDict(self, theDict):
         string = ""
         for key, value in theDict.items():
             string += "\n"
@@ -58,7 +58,7 @@ class Generator:
             string += str(value)
         return string
 
-    def __printArray(self, theArray):
+    def _printArray(self, theArray):
         string = ""
         for i in range(len(theArray)):
             string += "\n" + str(i + 1) + " " + str(theArray[i])
@@ -79,15 +79,15 @@ class Generator:
         f.write(f"param nbResources := {self.nbResources};\n")
         f.write(f"param nbServiceProviders := {self.nbServiceProviders};\n")
         f.write("param availableResources :=")
-        f.write(self.__printDict(availableResources))
+        f.write(self._printDict(availableResources))
         f.write("\n;\nparam nbOptions :=")
-        f.write(self.__printArray(options))
+        f.write(self._printArray(options))
         f.write("\n;\nparam bandwidthSaving :=")
-        f.write(self.__printDict(bandwidthSaving))
+        f.write(self._printDict(bandwidthSaving))
         f.write("\n;\nparam nbContainers :=")
-        f.write(self.__printDict(containers))
+        f.write(self._printDict(containers))
         f.write("\n;\nparam requiredResources :=")
-        f.write(self.__printDict(requiredResources))
+        f.write(self._printDict(requiredResources))
         f.write("\n;\n\r")
         f.close()
 

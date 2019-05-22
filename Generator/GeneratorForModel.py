@@ -4,7 +4,7 @@ from Model.Option import *
 from Model.Server import *
 from Model.ServiceProvider import  *
 from Generator.Generator import *
-
+import pandas as pd
 
 class GeneratorForModel(Generator):
     """
@@ -67,3 +67,22 @@ class GeneratorForModel(Generator):
                     opt.addContainer(Container(self.reqResources[0].generate(), self.reqResources[1].generate()))
                 resources = opt.getTotalResources()
                 opt.setBandwidthSaving(self.bandwidth.generate(resources, totalResources))
+
+    def save_to_csv(self, suffix=""):
+        np = NetworkProvider().getInstance()
+        df = pd.DataFrame(columns=["sp", "opt", "container", "cpu", "ram", "cpu_tot_opt", "ram_tot_opt", "utility_opt"])
+        for i, sp in enumerate(np.getServiceProviders()):
+            for j, opt in enumerate(sp.getOptions()):
+                for k, container in enumerate(opt.getContainers()):
+                    df.loc[len(df)] = {
+                        "sp": i,
+                        "opt": j,
+                        "container": k,
+                        "cpu": container.getCpuReq(),
+                        "ram": container.getRamReq(),
+                        "cpu_tot_opt": opt.getCpuReq(),
+                        "ram_tot_opt": opt.getRamReq(),
+                        "utility_opt": opt.getBandwidthSaving()
+                    }
+        df.to_csv("results/google_traces_scenario_%d_sp_%d_opt_%s.csv" %
+                  (len(np.getServiceProviders()), len(np.getServiceProviders()[0].getOptions()), suffix))

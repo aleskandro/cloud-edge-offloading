@@ -3,18 +3,20 @@ import time
 import numpy as np
 
 from Generator.GeneratorForModelGoogle import *
+from Generator.GeneratorForModel import *
 from Random.NormalRandomVariable import *
 from Random.UniformRandomVariable import *
 from Random.ResourceDependentRandomVariable import *
 import utils.radar_chart as radar_chart
 import glob
+import os
 
 maxxCpu = 30
 maxxRam = 30000
 defaultOptions = 5
 Random.seed(5)
 
-def generate_input_datas(avgCpu=1, avgRam=1, avgServers=8, avgContainers=8, avgServiceProviders=50, K=1.8):
+def generate_input_datas(avgCpu=1, avgRam=1, avgServers=16, avgContainers=8, avgServiceProviders=50, K=1.8):
     global maxxCpu, maxxRam
 
     maxxCpu = avgCpu * avgServers
@@ -64,16 +66,21 @@ def make_datas_var_options_var_sps_raw(maxSPs=160, maxOpts=8, max_runs=20, filen
     df = pd.DataFrame(columns=["options", "service_providers", "utility", "K"])
     for i in range(max_runs):
         Random.seed((i+1)*3)
-        j = 10
+        j = 80
         while j <= maxSPs:
             serviceProviders = UniformRandomVariable(j, j)
             k = 1
+            options = UniformRandomVariable(8, 8)
+            generator = GeneratorForModelGoogle(servers, serviceProviders,
+                                        options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq], K=1)
+            generator.generate()  # TODO make multithread by not using a singleton (can I?)
+            generator.save_to_csv(i)
             while k <= maxOpts:
-                options = UniformRandomVariable(k, k)
-                generator = GeneratorForModelGoogle(servers, serviceProviders,
-                                            options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq], K=1)
-                generator.generate()  # TODO make multithread by not using a singleton (can I?)
-                npp.makePlacement(1)
+                #npp.clean_cluster()
+                #npp.makePlacement(1, options_slice=k)
+                generator.save_for_ilp(options_slice=k)
+
+                os.system("glpsol --math modelglpk.mod -d scenario.dat --proxy 600")
                 df.loc[len(df)] = {"options": k, "service_providers": j, "utility": npp.getBandwidthSaving(),
                                    "K": generator.getK()}
                 print(df)
@@ -168,6 +175,7 @@ if __name__ == "__main__":
 
     #make_radar_chart("results/radar_plot_relative.csv")
 
+    os.system("rm -rf tresults/*")
     if not len(glob.glob("results/radar_plot_raw.csv")) > 0:
         make_datas_var_options_var_sps_raw()
 

@@ -4,6 +4,7 @@ from Model.Option import *
 from Model.Server import *
 from Model.ServiceProvider import  *
 from Generator.Generator import *
+import pandas as pd
 import random_job
 
 
@@ -62,7 +63,7 @@ class GeneratorForModelGoogle(Generator):
             for _ in range(self.options.generate()):
                 opt = sp.addOption(Option(sp))
                 rjob = random_job.random_job()
-                for task in rjob.itertuples():
+                for count, task in enumerate(rjob.itertuples()):
                     opt.addContainer(Container(task.CPU, task.memory))
                 resources = opt.getTotalResources()
                 opt.setBandwidthSaving(self.bandwidth.generate(resources, totalResources))
@@ -70,3 +71,64 @@ class GeneratorForModelGoogle(Generator):
 
     def getK(self):
         return self._K
+
+    def save_to_csv(self, suffix=""):
+        np = NetworkProvider().getInstance()
+        df = pd.DataFrame(columns=["sp", "opt", "container", "cpu", "ram", "cpu_tot_opt", "ram_tot_opt", "utility_opt"])
+        for i, sp in enumerate(np.getServiceProviders()):
+            for j, opt in enumerate(sp.getOptions()):
+                for k, container in enumerate(opt.getContainers()):
+                    df.loc[len(df)] = {
+                        "sp": i,
+                        "opt": j,
+                        "container": k,
+                        "cpu": container.getCpuReq(),
+                        "ram": container.getRamReq(),
+                        "cpu_tot_opt": opt.getCpuReq(),
+                        "ram_tot_opt": opt.getRamReq(),
+                        "utility_opt": opt.getBandwidthSaving()
+                    }
+        df.to_csv("results/google_traces_scenario_%d_sp_%d_opt_%s.csv" %
+                  (len(np.getServiceProviders()), len(np.getServiceProviders()[0].getOptions()), suffix))
+
+    def save_for_ilp(self, options_slice=1):
+        np = NetworkProvider().getInstance()
+        f = open("scenario.dat", "w+")
+        f.write(f"param K := {self._K};\n")
+        f.write(f"param nbServers := {len(np.getServers())};\n")
+        f.write(f"param nbResources := 2;\n")
+        f.write(f"param nbServiceProviders := {len(np.getServiceProviders())};\n")
+        f.write("param availableResources :=")
+        availableResources = {}
+        for i, server in enumerate(np.getServers()):
+            availableResources[i,0] = server.getTotalCpu()
+            availableResources[i,1] = server.getTotalRam()
+        f.write(self._printDict(availableResources))
+        f.write("\n;\nparam nbOptions :=")
+        options = []
+        for i, sp in enumerate(np.getServiceProviders()):
+            options.append(len(sp.getOptions()[0:options_slice]))
+        f.write(self._printArray(options))
+        f.write("\n;\nparam bandwidthSaving :=")
+        bandwidthSaving = {}
+        for i, sp in enumerate(np.getServiceProviders()):
+            for j, opt in enumerate(sp.getOptions()[0:options_slice]):
+                bandwidthSaving[i,j] = opt.getBandwidthSaving()
+        f.write(self._printDict(bandwidthSaving))
+        f.write("\n;\nparam nbContainers :=")
+        containers = {}
+        for i, sp in enumerate(np.getServiceProviders()):
+            for j, opt in enumerate(sp.getOptions()[0:options_slice]):
+                containers[i,j] = len(opt.getContainers())
+        f.write(self._printDict(containers))
+        f.write("\n;\nparam requiredResources :=")
+        requiredResources = {}
+        for i, sp in enumerate(np.getServiceProviders()):
+            for j, opt in enumerate(sp.getOptions()[0:options_slice]):
+                for k, container in enumerate(opt.getContainers()):
+                    requiredResources[i,j,k,0] = container.getCpuReq()
+                    requiredResources[i,j,k,1] = container.getRamReq()
+        f.write(self._printDict(requiredResources))
+        f.write("\n;\n\r")
+        f.close()
+

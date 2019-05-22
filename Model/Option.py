@@ -73,7 +73,6 @@ class Option:
             tram = self.getServiceProvider().getDefaultOption().getRamReq() if self.getServiceProvider().getDefaultOption() else 0
             denominator += (self.getCpuReq() - tcpu) * 1/server.getTotalCpu()
             denominator += (self.getRamReq() - tram) * 1/server.getTotalRam()
-
         self.__efficiency = numerator / denominator
 
     def __str__(self):

@@ -70,9 +70,12 @@ class NetworkProvider:
                     for container in option.getContainers():
                         if container.getServer():
                             container.getServer().unplaceContainer(container)
+                sp.setDefaultOption(None)
             # Cluster clean
+        def clean_cluster(self):
+            self.__clean_cluster()
 
-        def makePlacement(self, placement_id, time=0):
+        def makePlacement(self, placement_id, time=0, options_slice=None):
             fitting = True
             if time == 0:
                 self.__clean_cluster() # Clean the cluster at time 0 or for a non time-batched execution
@@ -88,7 +91,7 @@ class NetworkProvider:
                 limit-=1
                 options = []
                 for sp in self.__serviceProviders:
-                    opt = sp.getBestOption()
+                    opt = sp.getBestOption(options_slice)
                     if opt:
                         options.append(opt)
                 candidateOption = max(options, key=lambda x: x.getEfficiency()) if len(options) > 0 else None
