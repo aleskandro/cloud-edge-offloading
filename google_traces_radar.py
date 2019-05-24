@@ -16,7 +16,7 @@ maxxRam = 30000
 defaultOptions = 5
 Random.seed(5)
 
-def generate_input_datas(avgCpu=1, avgRam=1, avgServers=16, avgContainers=8, avgServiceProviders=50, K=1.8):
+def generate_input_datas(avgCpu=1, avgRam=1, avgServers=8, avgContainers=8, avgServiceProviders=50, K=1.8):
     global maxxCpu, maxxRam
 
     maxxCpu = avgCpu * avgServers
