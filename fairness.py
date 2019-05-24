@@ -8,11 +8,10 @@ import matplotlib.pyplot as plt
 import cycler
 plt.rcParams.update({'font.size': 12})
 def fairness():
-    global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq, options
     Random.seed(2)
     cmpilph.generate_input_datas(K=10)
-    generator = GeneratorForModel(servers, serviceProviders,
-                                  options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq])
+    generator = GeneratorForModel(cmpilph.servers, cmpilph.serviceProviders,
+                                  cmpilph.options, cmpilph.containers, [cmpilph.cpu, cmpilph.ram], cmpilph.bandwidth, [cmpilph.cpuReq, cmpilph.ramReq])
     generator.generate()  # TODO make multithread by not using a singleton (can I?)
     npp = NetworkProvider().getInstance()
     npp.makePlacement(1)
