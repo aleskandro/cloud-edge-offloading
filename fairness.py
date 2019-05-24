@@ -6,8 +6,7 @@ import pandas as pd
 import glob
 import matplotlib.pyplot as plt
 import cycler
-
-
+plt.rcParams.update({'font.size': 12})
 def fairness():
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq, options
     Random.seed(2)
@@ -31,36 +30,38 @@ def fairness():
 
 
 def fairness_graph():
-    global maxxCpu, maxxRam
-    print(maxxCpu, maxxRam)
+    cmpilph.generate_input_datas()
     if len(glob.glob("results/fairness.csv")) == 0:
-        cmpilph.generate_input_datas()
         fairness()
 
     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10,6))
-    monochrome = (cycler('color', ['k']) * cycler('linestyle', ['-', '--', ':']) * cycler('marker',['^', ',', '.']))
+    #monochrome = (cycler('color', ['k']) * cycler('linestyle', ['-', '--', ':']) * cycler('marker',['^', ',', '.']))
     #for ax in axs:
     #    ax.set_prop_cycle(monochrome)
 
     df = pd.read_csv("results/fairness.csv")
     ax = axs[0]
+    first = True
     for i in df["ServiceProvider"].unique():
         ax.scatter(df.loc[(df["ServiceProvider"] == i) & (df["Width"] == 10)]["Utility"],
                    df.loc[(df["ServiceProvider"] == i) & (df["Width"] == 10)]["ServiceProvider"],
-                   c="#777777", s=20)
+                   c="#777777", s=20, label="Available option" if first else None)
+        first = False
     ax.scatter(df.loc[df["Width"] == 70]["Utility"],df.loc[df["Width"] == 70]["ServiceProvider"],
-                c="k", marker="x", s=70)
+                c="k", marker="x", s=70, label="Chosen option")
     ax.set_xlabel("Utility")
     ax.set_ylabel("Service provider ID")
+    ax.legend(loc="best")
     ax = axs[1]
     ax.scatter(df.loc[df["Width"] == 70]["CPU"],
-               df.loc[df["Width"] == 70]["RAM"], c="#777777", s=20)
-    ax.set_ylim([0, maxxRam])
-    ax.set_xlim([0, maxxCpu])
+               df.loc[df["Width"] == 70]["RAM"], c="#777777", s=20, label="Chosen option")
+    ax.set_ylim([0, cmpilph.maxxRam])
+    ax.set_xlim([0, cmpilph.maxxCpu])
     ax.set_xlabel("CPUs")
     ax.set_ylabel("RAM (Mb)")
+    ax.legend(loc="best")
     fig.subplots_adjust(wspace=0.35)
-    fig.savefig("results/fairness.png")
+    fig.savefig("results/fairness.eps", dpi=300)
 
 
 if __name__ == "__main__":

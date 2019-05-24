@@ -67,6 +67,7 @@ class NetworkProvider:
             # Clean the cluster
             for sp in self.__serviceProviders:
                 for option in sp.getOptions():
+                    option.tried(False)
                     for container in option.getContainers():
                         if container.getServer():
                             container.getServer().unplaceContainer(container)
@@ -87,7 +88,7 @@ class NetworkProvider:
 
             datas = [[] for _ in self.__serviceProviders]
             limit = 100 # limits the number of iteration to 100, for safety on not convergence but tricky, it should be the total number of options
-            while(fitting and limit > 0):
+            while(fitting): #and limit > 0):
                 limit-=1
                 options = []
                 for sp in self.__serviceProviders:
@@ -125,7 +126,10 @@ class NetworkProvider:
                             if host:
                                 host.placeContainer(container)
                     # Algorithm end
-                    fitting = False
+                    #fitting = False
+                    # Algorithm not anymore end here but option will be set to tried
+                    # The algorithm now end whenever the candidateOption is null
+                    candidateOption.tried()
                 else:
                     candidateOption.getServiceProvider().setDefaultOption(candidateOption)
                     candidateOption.getServiceProvider().set_start_time(time)  # Option is being deployed, setting start time

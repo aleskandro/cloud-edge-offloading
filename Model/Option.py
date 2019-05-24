@@ -5,6 +5,14 @@ class Option:
         self.__bandwidthSaving = 0
         self.__efficiency = 0
         self.__serviceProvider = serviceProvider
+        self.__tried = False
+
+    def tried(self, tried=True):
+        self.__tried = tried
+
+    def wasTried(self):
+        return self.__tried
+
 
     def getCpuReq(self): # TODO multithread
         cpu = 0

@@ -55,7 +55,7 @@ class ServiceProvider:
         opts = self.__options if options is None else self.__options[0:options]
         for opt in opts:
             bs = self.__defaultOption.getBandwidthSaving() if self.__defaultOption else 0
-            if opt.getBandwidthSaving() > bs:
+            if opt.getBandwidthSaving() > bs and not opt.wasTried():
                 subset.append(opt)
                 opt.computeEfficiency()
         return subset

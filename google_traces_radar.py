@@ -63,26 +63,30 @@ def make_datas_var_options_var_sps_raw(maxSPs=160, maxOpts=8, max_runs=20, filen
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
     generate_input_datas()
     npp = NetworkProvider().getInstance()
-    df = pd.DataFrame(columns=["options", "service_providers", "utility", "K"])
+    df = pd.DataFrame(columns=["options", "service_providers", "utility", "K", "remaining_cpu", "remaining_ram", "time_elapsed"])
     for i in range(max_runs):
         Random.seed((i+1)*3)
-        j = 80
+        j = 10
         while j <= maxSPs:
             serviceProviders = UniformRandomVariable(j, j)
             k = 1
-            options = UniformRandomVariable(8, 8)
-            generator = GeneratorForModelGoogle(servers, serviceProviders,
-                                        options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq], K=1)
-            generator.generate()  # TODO make multithread by not using a singleton (can I?)
-            generator.save_to_csv(i)
-            while k <= maxOpts:
-                #npp.clean_cluster()
-                #npp.makePlacement(1, options_slice=k)
-                generator.save_for_ilp(options_slice=k)
 
-                os.system("glpsol --math modelglpk.mod -d scenario.dat --proxy 600")
+            while k <= maxOpts:
+                options = UniformRandomVariable(k, k)
+                generator = GeneratorForModelGoogle(servers, serviceProviders,
+                                            options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq], K=1)
+                generator.generate()  # TODO make multithread by not using a singleton (can I?)
+                #generator.save_to_csv(i)
+                #npp.clean_cluster()
+                t1 = time.time()
+                npp.makePlacement(1)
+                t2 = time.time()
+                #generator.save_for_ilp()
+
+                #os.system("glpsol --math modelglpk.mod -d scenario.dat --proxy 600")
                 df.loc[len(df)] = {"options": k, "service_providers": j, "utility": npp.getBandwidthSaving(),
-                                   "K": generator.getK()}
+                                   "K": generator.getK(), "remaining_cpu": npp.getRemainingResources()[0],
+                                   "remaining_ram": npp.getRemainingResources()[1], "time_elapsed": t2-t1}
                 print(df)
                 k *= 2
             j *= 2

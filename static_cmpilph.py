@@ -16,6 +16,7 @@ from Random.ResourceDependentRandomVariable import *
 
 maxxCpu = 30
 maxxRam = 30000
+plt.rcParams.update({'font.size': 12})
 
 def confidence_interval(x):
     return 1.96 * x.std() / math.sqrt(x.count())
@@ -154,7 +155,7 @@ def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
                         label=label)
             #max_y = max(math.ceil(bwOpts["BandwidthSaving"]["mean"].max()/aavgServiceProviders) + 2, max_y)
             #ax.set_ylim([0, max_y])
-    ax.set_ylim([0, 100])
+    ax.set_ylim([0, 50])
     ax = axs[1]
     max_y = 30
     ax.set_ylabel("Available resources after placement (%)")
@@ -204,7 +205,7 @@ def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
         formatter = FuncFormatter(lambda y, _: '{:.16g}'.format(y))
         ax.xaxis.set_major_formatter(formatter)
 
-    fig.savefig("results/%s.png" % filename)
+    fig.savefig("results/%s.eps" % filename, dpi=500)
 
 
 if __name__ == "__main__":
