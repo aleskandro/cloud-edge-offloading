@@ -6,7 +6,7 @@ import pandas as pd
 import glob
 import matplotlib.pyplot as plt
 import cycler
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 12.5, 'font.family': 'serif'})
 def fairness():
     Random.seed(2)
     cmpilph.generate_input_datas(K=10)

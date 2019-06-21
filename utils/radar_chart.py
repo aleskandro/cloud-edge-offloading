@@ -5,6 +5,7 @@ from math import pi
 from scipy import interpolate
 import numpy as np
 
+
 if __name__ == "__main__":
     global df
     # Set data
@@ -29,7 +30,8 @@ def make_radar_chart(df, filename):
     fig, ax = plt.subplots(figsize=(10,10), nrows=1, ncols=1, subplot_kw=dict(projection="polar"))
 
     # Draw one axe per variable + add labels labels yet
-    plt.xticks(angles, categories, color='grey', size=8)
+    plt.xticks(angles, categories, color='grey')
+    ax.tick_params(pad=15)
 
     # Draw ylabels
     #ax.set_rlabel_position(0)

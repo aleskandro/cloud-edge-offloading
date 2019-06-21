@@ -16,8 +16,7 @@ from Random.ResourceDependentRandomVariable import *
 
 maxxCpu = 30
 maxxRam = 30000
-plt.rcParams.update({'font.size': 12})
-
+plt.rcParams.update({'font.size': 13, 'font.family': 'serif'})
 def confidence_interval(x):
     return 1.96 * x.std() / math.sqrt(x.count())
 
@@ -135,7 +134,9 @@ def save_to_file(filename, suffix, bwOpts, rrOpts, timing):
 
 def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
     global aavgServiceProviders
-    fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(10,10))
+    fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(10,12))
+
+    fig.subplots_adjust(hspace=0.25)
     #monochrome = (cycler('color', ['k']) * cycler('linestyle', ['-', '--', ':']) * cycler('marker',['^', ',', '.']))
     #for ax in axs:
     #    ax.set_prop_cycle(monochrome)
@@ -204,6 +205,8 @@ def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
             ax.set_xscale('log', basex=2)
         formatter = FuncFormatter(lambda y, _: '{:.16g}'.format(y))
         ax.xaxis.set_major_formatter(formatter)
+        ax.grid(axis="y")
+
 
     fig.savefig("results/%s.eps" % filename, dpi=500)
 
@@ -216,6 +219,6 @@ if __name__ == "__main__":
     execute_simulations(20, lambda x: generate_input_datas(avgContainers=x), "Containers", [1, 2, 4, 8, 16])
     execute_simulations(20, lambda x: generate_input_datas(K=x), "K", [0.5, 1, 1.5, 1.8, 2])
     make_graph_from_file("cmpILPH-Options", "Options", "Number of options per service providers")
-    make_graph_from_file("cmpILPH-Servers", "Servers", "Number of servers")
+    make_graph_from_file("cmpILPH-Servers", "Servers", "Number of nodes")
     make_graph_from_file("cmpILPH-Containers", "Containers", "Number of containers per option")
     make_graph_from_file("cmpILPH-K", "K", "K", log=False, width=0.15)

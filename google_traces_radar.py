@@ -15,6 +15,7 @@ maxxCpu = 30
 maxxRam = 30000
 defaultOptions = 5
 Random.seed(5)
+plt.rcParams.update({'font.size': 12, 'font.family': 'serif'})
 
 def generate_input_datas(avgCpu=1, avgRam=1, avgServers=8, avgContainers=8, avgServiceProviders=50, K=1.8):
     global maxxCpu, maxxRam
@@ -135,7 +136,7 @@ def make_datas_var_options_var_sps(maxSPs=160, maxOpts=8, ret_func=NetworkProvid
 def make_radar_chart(filename="results/radar_plot.csv"):
     df = pd.read_csv(filename)
     print(df)
-    radar_chart.make_radar_chart(df, filename.replace("csv", "png"))
+    radar_chart.make_radar_chart(df, filename.replace("csv", "eps"))
 
 def make_csv_from_raw(filename="results/radar_plot_raw.csv", relative=True):
     df = pd.read_csv(filename)
