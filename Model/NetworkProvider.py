@@ -95,7 +95,7 @@ class NetworkProvider:
                     opt = sp.getBestOption(options_slice)
                     if opt:
                         options.append(opt)
-                if len(options) > 0:
+                if len(options) == 0:
                     break
                 candidateOption = max(options, key=lambda x: x.getEfficiency())
                 # Unplace old containers if options for the selected sp has changed
@@ -105,8 +105,8 @@ class NetworkProvider:
                 #    # Unplace old option from the cluster
                 if candidateOption.getServiceProvider().getDefaultOption():
                      for container in candidateOption.getServiceProvider().getDefaultOption().getContainers():
-                         if container.getServer():
-                             container.getServer().unplaceContainer(container)
+                         #if container.getServer():
+                         container.getServer().unplaceContainer(container)
                 # Try to place new option on the cluster
                 for container in candidateOption.getContainers():
                     host = self.__getBestHost(container.getCpuReq(), container.getRamReq())
@@ -119,10 +119,12 @@ class NetworkProvider:
                     for container in candidateOption.getContainers():
                         if container.getServer():
                             container.getServer().unplaceContainer(container)
-                    # Restore old option (Warning: maybe the same placement as the previous one is not guaranteed)
+                    # Restore old option
                     if candidateOption.getServiceProvider().getDefaultOption():
                         for container in candidateOption.getServiceProvider().getDefaultOption().getContainers():
-                            host = self.__getBestHost(container.getCpuReq(), container.getRamReq())
+                            host = container.get_old_server()
+                            if host is None:
+                                print("WARNING: Host is none for old option")
                             if host:
                                 host.placeContainer(container)
                     # Algorithm end
@@ -155,6 +157,7 @@ class NetworkProvider:
                         for container in opt.getContainers():
                             if container.getServer():
                                 container.getServer().unplaceContainer(container)
+                        sp.setDefaultOption(None)
                         break
 
 

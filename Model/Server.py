@@ -33,6 +33,7 @@ class Server:
             return False
         self.__occupiedRam -= container.getRamReq()
         self.__occupiedCpu -= container.getCpuReq()
+        container.set_old_server(self)
         container.setServer(None)
         return True
 
