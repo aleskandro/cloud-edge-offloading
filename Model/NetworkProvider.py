@@ -2,6 +2,8 @@ import operator
 import matplotlib.pyplot as plt
 import numpy.random as Random
 import math
+
+
 class NetworkProvider:
     class __NetworkProvider:
         def clean(self):
@@ -25,13 +27,41 @@ class NetworkProvider:
         def addServer(self, server):
             self.__servers.append(server)
 
-        def __getBestHost(self, cpu, ram):
+        def getBestHost(self, cpu, ram):
             bestHost = None
             for server in self.__servers:
                 if server.getAvailableRam() < ram or server.getAvailableCpu() < cpu:
                     continue
                 if not bestHost or bestHost.getResidualValue() < server.getResidualValue():
                     bestHost = server
+            return bestHost
+
+        def getBestHostMin(self, cpu, ram):
+            bestHost = None
+            for server in self.__servers:
+                if server.getAvailableRam() < ram or server.getAvailableCpu() < cpu:
+                    continue
+                if not bestHost or bestHost.getResidualValue() > server.getResidualValue():
+                    bestHost = server
+            return bestHost
+
+        def getBestHostScalarProduct(self, cpu, ram):
+            bestHost = None
+            containerVector = (cpu, ram)
+            projection = 0
+            for server in self.__servers:
+                if server.getAvailableRam() < ram or server.getAvailableCpu() < cpu:
+                    continue
+
+                desiredVector = (server.getAvailableCpu(), server.getAvailableRam())
+                desiredVectorNorm = math.sqrt(server.getAvailableCpu()**2 + server.getAvailableRam()**2)
+                desiredVector = map(lambda x: x/desiredVectorNorm, desiredVector)
+                projection_new = sum(p*q for p,q in zip(desiredVector, containerVector))
+
+                if not bestHost or projection_new > projection:
+                    bestHost = server
+                    projection = projection_new
+
             return bestHost
 
         def getBandwidthSaving(self):
@@ -76,7 +106,7 @@ class NetworkProvider:
         def clean_cluster(self):
             self.__clean_cluster()
 
-        def makePlacement(self, placement_id, time=0, options_slice=None):
+        def makePlacement(self, placement_id, time=0, options_slice=None, get_best_host=None):
             fitting = True
             if time == 0:
                 self.__clean_cluster() # Clean the cluster at time 0 or for a non time-batched execution
@@ -109,7 +139,11 @@ class NetworkProvider:
                          container.getServer().unplaceContainer(container)
                 # Try to place new option on the cluster
                 for container in candidateOption.getContainers():
-                    host = self.__getBestHost(container.getCpuReq(), container.getRamReq())
+                    host = None
+                    if get_best_host is None:
+                        host = self.getBestHost(container.getCpuReq(), container.getRamReq())
+                    else:
+                        host = get_best_host(container.getCpuReq(), container.getRamReq())
                     if host:
                         host.placeContainer(container)
                     else:
