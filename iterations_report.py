@@ -35,7 +35,7 @@ def iterations_report_graph():
 
     df = pd.read_csv("results/iterations_report.csv")
     #df_naive = pd.read_csv("results/usage_vectors_naive.csv")
-    fig, axs = plt.subplots(nrows=int(df["Node"].max()) + 1 + 2, ncols=1, figsize=(10, 60))
+    fig, axs = plt.subplots(nrows=(len(df.columns) - 4)/2 + 2, ncols=1, figsize=(10, 60))
 
     # Utility and expected utility
     ax = axs[0]
