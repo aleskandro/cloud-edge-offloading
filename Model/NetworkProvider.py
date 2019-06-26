@@ -106,11 +106,15 @@ class NetworkProvider:
         def clean_cluster(self):
             self.__clean_cluster()
 
-        def getClusterUtility(self):
-            utility = 0
-            for sp in self.getServiceProviders():
-                utility += sp.getDefaultOption().getBandwidthSaving() if sp.getDefaultOption() is not None else 0
-            return utility
+        def get_h_l(self):
+            h_cpu = 0
+            h_ram = 0
+            for server in self.getServers():
+                h_cpu += server.getTotalCpu()
+                h_ram += server.getTotalRam()
+            h_cpu = 1/h_cpu
+            h_ram = 1/h_ram
+            return h_cpu, h_ram
 
         def makePlacement(self, placement_id, time=0, options_slice=None, get_best_host=None, collect_iterations_report=False):
             iterations_report = pd.DataFrame(columns=["Iteration", "Utility", "ExpectedUtility", "BestJumpEfficiency"])
@@ -126,6 +130,7 @@ class NetworkProvider:
             datas = [[] for _ in self.__serviceProviders]
             limit = 100 # limits the number of iteration to 100, for safety on not convergence but tricky, it should be the total number of options
             iteration = 0
+            old_option = None
             while(fitting): #and limit > 0):
                 limit-=1
                 options = []
@@ -183,8 +188,19 @@ class NetworkProvider:
                         else 0)
 
                 if collect_iterations_report:
-                    new_row = {"Iteration": iteration, "Utility": self.getClusterUtility(),
-                               "ExpectedUtility": 0, "BestJumpEfficiency": candidateOption.getEfficiency()}
+
+                    h_cpu, h_ram = self.get_h_l()
+                    utility_expected = 0
+                    if old_option is not None:
+                        utility_expected = old_option.getEfficiency() * \
+                            (
+                                   h_cpu * (self.getTotalResources()[0] - old_option.getResourcesIncreasing()[0]) +
+                                   h_ram * (self.getTotalResources()[1] - old_option.getResourcesIncreasing()[1])
+                            )
+                        utility_expected += self.getBandwidthSaving()
+                    old_option = candidateOption
+                    new_row = {"Iteration": iteration, "Utility": self.getBandwidthSaving(),
+                               "ExpectedUtility": utility_expected, "BestJumpEfficiency": candidateOption.getEfficiency()}
                     for index, server in enumerate(self.getServers()):
                         new_row["%d_CPU" % index] = (server.getTotalCpu() - server.getAvailableCpu()) \
                                                     / server.getTotalCpu()
