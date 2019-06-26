@@ -106,6 +106,12 @@ class NetworkProvider:
         def clean_cluster(self):
             self.__clean_cluster()
 
+        def getClusterUtility(self):
+            utility = 0
+            for sp in self.getServiceProviders():
+                utility += sp.getDefaultOption().getBandwidthSaving() if sp.getDefaultOption() is not None else 0
+            return utility
+
         def makePlacement(self, placement_id, time=0, options_slice=None, get_best_host=None, collect_iterations_report=False):
             iterations_report = pd.DataFrame(columns=["Iteration", "Utility", "ExpectedUtility", "BestJumpEfficiency"])
             fitting = True
@@ -177,7 +183,7 @@ class NetworkProvider:
                         else 0)
 
                 if collect_iterations_report:
-                    new_row = {"Iteration": iteration, "Utility": candidateOption.getBandwidthSaving(),
+                    new_row = {"Iteration": iteration, "Utility": self.getClusterUtility(),
                                "ExpectedUtility": 0, "BestJumpEfficiency": candidateOption.getEfficiency()}
                     for index, server in enumerate(self.getServers()):
                         new_row["%d_CPU" % index] = (server.getTotalCpu() - server.getAvailableCpu()) \
