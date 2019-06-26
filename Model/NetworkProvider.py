@@ -2,7 +2,7 @@ import operator
 import matplotlib.pyplot as plt
 import numpy.random as Random
 import math
-
+import pandas as pd
 
 class NetworkProvider:
     class __NetworkProvider:
@@ -106,7 +106,8 @@ class NetworkProvider:
         def clean_cluster(self):
             self.__clean_cluster()
 
-        def makePlacement(self, placement_id, time=0, options_slice=None, get_best_host=None):
+        def makePlacement(self, placement_id, time=0, options_slice=None, get_best_host=None, collect_iterations_report=False):
+            iterations_report = pd.DataFrame(columns=["Iteration", "Utility", "ExpectedUtility", "BestJumpEfficiency"])
             fitting = True
             if time == 0:
                 self.__clean_cluster() # Clean the cluster at time 0 or for a non time-batched execution
@@ -118,6 +119,7 @@ class NetworkProvider:
 
             datas = [[] for _ in self.__serviceProviders]
             limit = 100 # limits the number of iteration to 100, for safety on not convergence but tricky, it should be the total number of options
+            iteration = 0
             while(fitting): #and limit > 0):
                 limit-=1
                 options = []
@@ -173,7 +175,19 @@ class NetworkProvider:
                 for sp_index, sp in enumerate(self.__serviceProviders):
                     datas[sp_index].append(sp.getOptions().index(sp.getDefaultOption()) + 1 if sp.getDefaultOption()
                         else 0)
+
+                if collect_iterations_report:
+                    new_row = {"Iteration": iteration, "Utility": candidateOption.getBandwidthSaving(),
+                               "ExpectedUtility": 0, "BestJumpEfficiency": candidateOption.getEfficiency()}
+                    for index, server in enumerate(self.getServers()):
+                        new_row["%d_CPU" % index] = (server.getTotalCpu() - server.getAvailableCpu()) \
+                                                    / server.getTotalCpu()
+                        new_row["%d_RAM" % index] = (server.getTotalRam() - server.getAvailableRam()) \
+                                                    / server.getTotalRam()
+                    iterations_report = iterations_report.append(new_row, ignore_index=True)
+                    iteration += 1
             #print(datas)
+            return iterations_report
 
         def make_placement_naive(self, placement_id=0): # Not for temporal execution
             self.__clean_cluster()
