@@ -76,11 +76,18 @@ class Option:
         numerator -= self.getServiceProvider().getDefaultOption().getBandwidthSaving() if \
             self.getServiceProvider().getDefaultOption() else 0
 
+        h_cpu = 0
+        h_ram = 0
         for server in NetworkProvider().getInstance().getServers():
-            tcpu = self.getServiceProvider().getDefaultOption().getCpuReq() if self.getServiceProvider().getDefaultOption() else 0
-            tram = self.getServiceProvider().getDefaultOption().getRamReq() if self.getServiceProvider().getDefaultOption() else 0
-            denominator += (self.getCpuReq() - tcpu) * 1/server.getTotalCpu()
-            denominator += (self.getRamReq() - tram) * 1/server.getTotalRam()
+            h_cpu += server.getTotalCpu()
+            h_ram += server.getTotalRam()
+        h_cpu = 1/h_cpu
+        h_ram = 1/h_ram
+
+        tcpu = self.getServiceProvider().getDefaultOption().getCpuReq() if self.getServiceProvider().getDefaultOption() else 0
+        tram = self.getServiceProvider().getDefaultOption().getRamReq() if self.getServiceProvider().getDefaultOption() else 0
+        denominator += (self.getCpuReq() - tcpu) * h_cpu
+        denominator += (self.getRamReq() - tram) * h_ram
         self.__efficiency = numerator / denominator
 
     def __str__(self):
