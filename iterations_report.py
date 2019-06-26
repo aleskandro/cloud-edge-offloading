@@ -15,7 +15,7 @@ def iterations_report(simulate, get_best_host=NetworkProvider().getInstance().ge
     cmpilph.generate_input_datas(K=2, avgCpu=1, avgRam=1)
     generator = GeneratorForModelGoogle(cmpilph.servers, cmpilph.serviceProviders,
                                   cmpilph.options, cmpilph.containers, [cmpilph.cpu, cmpilph.ram], cmpilph.bandwidth, [cmpilph.cpuReq, cmpilph.ramReq])
-    generator.generate()  # TODO make multithread by not using a singleton (can I?)
+    generator.generate(service_providers=simulate)  # TODO make multithread by not using a singleton (can I?)
     npp = NetworkProvider().getInstance()
     if not simulate:
         return

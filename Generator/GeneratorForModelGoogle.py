@@ -43,14 +43,15 @@ class GeneratorForModelGoogle(Generator):
         np = NetworkProvider().getInstance()
         [np.addServiceProvider(ServiceProvider(self.execution_time.generate() if self.execution_time else None)) for _ in range(self.nbServiceProviders)]
 
-    def generate(self):
+    def generate(self, service_providers=True):
         NetworkProvider().getInstance().clean()
         #self._generateServiceProviders()
         self._generateAvailableResources()
         #self._generateOptions()
         #self._generateContainers()
         #self._generateRequiredResources()
-        self.generateServiceProviders()
+        if service_providers:
+            self.generateServiceProviders()
         #self._generateBandwidthSaving()
 
     def generateServiceProviders(self):
