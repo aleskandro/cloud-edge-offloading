@@ -70,7 +70,18 @@ class GeneratorForModelGoogle(Generator):
                     opt.addContainer(Container(task.CPU, task.memory))
                 resources = opt.getTotalResources()
                 opt.setBandwidthSaving(self.bandwidth.generate(resources, totalResources))
-        self._K = (np.getSumAverageRequiredResources()[0]/np.getTotalResources()[0] + np.getSumAverageRequiredResources()[1]/np.getTotalResources()[1])/2
+
+        avgZ = 0
+        for sp in np.getServiceProviders():
+            for opt in sp.getOptions():
+                avgZ += len(opt.getContainers())
+        avgZ /= len(np.getServiceProviders()) * len(opt.getContainers())
+
+        self._K = \
+            (
+                np.getSumAverageRequiredResources()[0]/np.getTotalResources()[0] * len(np.getServiceProviders()) * avgZ,
+                np.getSumAverageRequiredResources()[1]/np.getTotalResources()[1] * len(np.getServiceProviders()) * avgZ
+            )
 
     def getK(self):
         return self._K
