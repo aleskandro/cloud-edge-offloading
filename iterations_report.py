@@ -42,28 +42,29 @@ def iterations_report_graph():
     npp = NetworkProvider().getInstance()
     fig, axs = plt.subplots(nrows=int(len(npp.getServers()) + 2), ncols=1, figsize=(10, 60))
 
-    for filename in ["iterations_report_max.csv", "iterations_report_min.csv", "iterations_report_scalar.csv"]:
-        df = pd.read_csv("results/%s" % filename)
+    for filename in [("argmax","iterations_report_max.csv"),
+                     ("argmin","iterations_report_min.csv"), ("scalar","iterations_report_scalar.csv")]:
+        df = pd.read_csv("results/%s" % filename[1])
         # Utility and expected utility
         ax = axs[0]
         ax.errorbar(df["Iteration"], df["Utility"],
                     #yerr=100*bwOpts["BandwidthSaving"]["confidence_interval"]/aavgServiceProviders,
-                    label="Utility")
+                    label="Utility (%s)" % filename[0])
         ax.errorbar(df["Iteration"], df["ExpectedUtility"],
                     #yerr=100*bwOpts["BandwidthSaving"]["confidence_interval"]/aavgServiceProviders,
-                    label="Expected utility")
+                    label="Expected utility (%s)" % filename[0])
         ax.set_ylabel("Utility")
 
         ax = axs[1]
-        ax.errorbar(df["Iteration"], df["BestJumpEfficiency"], label="Best jump efficiency")
+        ax.errorbar(df["Iteration"], df["BestJumpEfficiency"], label="Best jump efficiency (%s)" % filename[0])
         ax.set_ylabel("Efficiency")
 
         for index, server in enumerate(npp.getServers()):
             ax = axs[2 + index]
             ax.set_ylim(0, 100)
             ax.set_ylabel("Percentage of occupied resources")
-            ax.errorbar(df["Iteration"], df["%d_CPU" % index] * 100, label="CPU")
-            ax.errorbar(df["Iteration"], df["%d_RAM" % index] * 100, label="RAM")
+            ax.errorbar(df["Iteration"], df["%d_CPU" % index] * 100, label="CPU (%s)" % filename[0])
+            ax.errorbar(df["Iteration"], df["%d_RAM" % index] * 100, label="RAM (%s)" % filename[0])
 
     for i, ax in enumerate(axs):
         ax.set_xlabel("Iteration")
