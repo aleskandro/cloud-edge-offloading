@@ -58,6 +58,8 @@ class GeneratorForModelGoogle(Generator):
         np = NetworkProvider().getInstance()
         totalResources = np.getTotalResources()
         #while(self._K * np.getTotalResources()[0] > np.getSumAverageRequiredResources()[0] or
+        # while k_ram < 1.8 || k_cpu < 1.8
+        # k_ram = k_cpu
         for _ in range(self.serviceProviders.generate()):
         #    self._K * np.getTotalResources()[1] > np.getSumAverageRequiredResources()[1]):
             sp = np.addServiceProvider(ServiceProvider(self.execution_time.generate() if self.execution_time else None))
