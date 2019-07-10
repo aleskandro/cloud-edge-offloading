@@ -16,7 +16,7 @@ def k_report(seed=2, sp_nb_max=50):
 
     for sp_nb in range(1, sp_nb_max):
         cmpilph.generate_input_datas(K=2, avgCpu=1, avgRam=1, avgServiceProviders=sp_nb)
-        generator = GeneratorForModelGoogle(cmpilph.servers, sp_nb,
+        generator = GeneratorForModelGoogle(cmpilph.servers, cmpilph.serviceProviders,
                                       cmpilph.options, cmpilph.containers, [cmpilph.cpu, cmpilph.ram],
                                             cmpilph.bandwidth, [cmpilph.cpuReq, cmpilph.ramReq])
         generator.generate()  # TODO make multithread by not using a singleton (can I?)
