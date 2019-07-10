@@ -198,8 +198,8 @@ class NetworkProvider:
                                    h_ram * (self.getTotalResources()[1] - old_option.getResourcesIncreasing()[1])
                             )
                         utility_expected += self.getBandwidthSaving()
-                        if utility_expected > self.__serviceProviders.count():
-                            utility_expected = self.__serviceProviders.count()
+                        if utility_expected > len(self.__serviceProviders):
+                            utility_expected = len(self.__serviceProviders)
                     old_option = candidateOption
                     new_row = {"Iteration": iteration, "Utility": self.getBandwidthSaving(),
                                "ExpectedUtility": utility_expected, "BestJumpEfficiency": candidateOption.getEfficiency()}

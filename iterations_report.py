@@ -29,10 +29,10 @@ def iterations_report_graph():
     simulate = len(glob.glob("results/iterations_report_max.csv")) == 0
     iterations_report(simulate)
     simulate = len(glob.glob("results/iterations_report_min.csv")) == 0
-    iterations_report(simulate, get_best_host=NetworkProvider().getInstance().getBestHostMin(),
+    iterations_report(simulate, get_best_host=NetworkProvider().getInstance().getBestHostMin,
                       filename="iterations_report_min.csv")
     simulate = len(glob.glob("results/iterations_report_scalar.csv")) == 0
-    iterations_report(simulate, get_best_host=NetworkProvider().getInstance().getBestHostScalarProduct(),
+    iterations_report(simulate, get_best_host=NetworkProvider().getInstance().getBestHostScalarProduct,
                       filename="iterations_report_scalar.csv")
 
     #monochrome = (cycler('color', ['k']) * cycler('linestyle', ['-', '--', ':']) * cycler('marker',['^', ',', '.']))
@@ -40,7 +40,7 @@ def iterations_report_graph():
     #    ax.set_prop_cycle(monochrome)
 
     npp = NetworkProvider().getInstance()
-    fig, axs = plt.subplots(nrows=int(npp.getServers().count() + 2), ncols=1, figsize=(10, 60))
+    fig, axs = plt.subplots(nrows=int(len(npp.getServers()) + 2), ncols=1, figsize=(10, 60))
 
     for filename in ["iterations_report_max.csv", "iterations_report_min.csv", "iterations_report_scalar.csv"]:
         df = pd.read_csv("results/%s" % filename)
