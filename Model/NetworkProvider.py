@@ -311,9 +311,7 @@ class NetworkProvider:
                     t = tuple(map(operator.add, t, (opt.getCpuReq(), opt.getRamReq())))
                 t = tuple(map(operator.truediv, t, (len(sp.getOptions()), len(sp.getOptions()))))
                 ret = tuple(map(operator.add, ret, t))
-            #return tuple(map(operator.truediv), ret, (len(self.__serviceProviders), len(self.__serviceProviders)))
-            return ret
-
+            return tuple(map(operator.truediv), ret, (len(self.__serviceProviders), len(self.__serviceProviders)))
 
     instance = None  # Can this be a private member?
 
