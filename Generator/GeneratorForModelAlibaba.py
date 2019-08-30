@@ -56,6 +56,7 @@ class GeneratorForModelAlibaba(Generator):
         #self._generateBandwidthSaving()
 
     def generateServiceProviders(self):
+        print("Generating Service providers")
         np = NetworkProvider().getInstance()
         totalResources = np.getTotalResources()
         #while(self._K * np.getTotalResources()[0] > np.getSumAverageRequiredResources()[0] or
@@ -64,14 +65,15 @@ class GeneratorForModelAlibaba(Generator):
 
         container_meta = pd.read_csv("datasets-alibaba/container_meta.csv", header=None)
         container_usage = pd.read_csv("datasets-alibaba/container_usage_5mins.csv", header=None)
-
+        print("CSVs read")
         apps = list(container_meta.loc[:,3].unique())
 
-
+        print("Entering the loop")
         for _ in range(self.serviceProviders.generate()):
         #    self._K * np.getTotalResources()[1] > np.getSumAverageRequiredResources()[1]):
             sp = np.addServiceProvider(ServiceProvider(self.execution_time.generate() if self.execution_time else None))
             for _ in range(self.options.generate()):
+                print("Generating option")
                 opt = sp.addOption(Option(sp))
 
                 app_du = apps.pop(Random.randint(0, len(apps)))
