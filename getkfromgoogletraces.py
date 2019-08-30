@@ -3,6 +3,7 @@ import numpy.random as Random
 from Model.NetworkProvider import NetworkProvider
 from Generator.GeneratorForModel import GeneratorForModel
 from Generator.GeneratorForModelGoogle import GeneratorForModelGoogle
+from Generator.GeneratorForModelAlibaba import GeneratorForModelAlibaba
 import pandas as pd
 import glob
 import matplotlib.pyplot as plt
@@ -15,8 +16,8 @@ def k_report(seed=2, sp_nb_max=50):
     df = pd.DataFrame(columns=["n_sp", "k_cpu", "k_ram"])
 
     for sp_nb in range(1, sp_nb_max):
-        cmpilph.generate_input_datas(K=2, avgCpu=1, avgRam=1, avgServiceProviders=sp_nb)
-        generator = GeneratorForModelGoogle(cmpilph.servers, cmpilph.serviceProviders,
+        cmpilph.generate_input_datas(K=2, avgCpu=800, avgRam=100, avgServiceProviders=sp_nb)
+        generator = GeneratorForModelAlibaba(cmpilph.servers, cmpilph.serviceProviders,
                                       cmpilph.options, cmpilph.containers, [cmpilph.cpu, cmpilph.ram],
                                             cmpilph.bandwidth, [cmpilph.cpuReq, cmpilph.ramReq])
         generator.generate()  # TODO make multithread by not using a singleton (can I?)

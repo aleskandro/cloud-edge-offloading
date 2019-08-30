@@ -9,7 +9,7 @@ import random_job
 import numpy.random as Random
 
 
-class GeneratorForModelGoogle(Generator):
+class GeneratorForModelAlibaba(Generator):
     """
     This inherits Generator and behave as a visitor for the NetworkProvider class. It's a bit tricky but it guarantees
     the same values generated for the MIP model
