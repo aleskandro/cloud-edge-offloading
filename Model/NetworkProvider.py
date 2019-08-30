@@ -311,7 +311,7 @@ class NetworkProvider:
                 t = (0, 0)
                 for opt in sp.getOptions():
                     t = tuple(map(operator.add, t, (opt.getCpuReq(), opt.getRamReq())))
-                    t = tuple(map(operator.truediv(t, (len(opt.getContainers()), len(opt.getContainers())))))
+                    t = tuple(map(operator.truediv, t, (len(opt.getContainers()), len(opt.getContainers()))))
                 t = tuple(map(operator.truediv, t, (len(sp.getOptions()), len(sp.getOptions()))))
                 ret = tuple(map(operator.add, ret, t))
             return tuple(map(operator.truediv, ret, (len(self.__serviceProviders), len(self.__serviceProviders))))
