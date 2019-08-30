@@ -20,7 +20,7 @@ def k_report(seed=2, sp_nb_max=50):
                                       cmpilph.options, cmpilph.containers, [cmpilph.cpu, cmpilph.ram],
                                             cmpilph.bandwidth, [cmpilph.cpuReq, cmpilph.ramReq])
         generator.generate()  # TODO make multithread by not using a singleton (can I?)
-        df = df.append({"n_sp": sp_nb, "k_cpu": generator.getK()[0], "k_ram": generator.getK()[1]})
+        df = df.append({"n_sp": sp_nb, "k_cpu": generator.getK()[0], "k_ram": generator.getK()[1]}, ignore_index=True)
 
     return df
 
@@ -41,11 +41,11 @@ def k_report_graph():
     df = pd.read_csv("results/googletracesK.csv")
 
     ax = axs[0]
-    ax.scatter(df["n_sp"], df.groupby("n_sp").mean()["k_cpu"], label="K_CPU")
+    ax.scatter(df["n_sp"].unique(), df.groupby("n_sp").mean()["k_cpu"], label="K_CPU")
     ax.set_ylabel("K_CPU")
 
     ax = axs[1]
-    ax.scatter(df["n_sp"], df.groupby("n_sp").mean()["k_ram"], label="K_RAM")
+    ax.scatter(df["n_sp"].unique(), df.groupby("n_sp").mean()["k_ram"], label="K_RAM")
     ax.set_ylabel("K_RAM")
 
     for i, ax in enumerate(axs):
