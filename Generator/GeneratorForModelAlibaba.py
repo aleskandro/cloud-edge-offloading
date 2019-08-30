@@ -77,8 +77,8 @@ class GeneratorForModelAlibaba(Generator):
 
                 notFound = True
 
+                opt = sp.addOption(Option(sp))
                 while (notFound):
-                    opt = sp.addOption(Option(sp))
 
                     app_du = apps.pop(Random.randint(0, len(apps)))
 
