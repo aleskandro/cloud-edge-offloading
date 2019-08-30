@@ -74,26 +74,32 @@ class GeneratorForModelAlibaba(Generator):
             sp = np.addServiceProvider(ServiceProvider(self.execution_time.generate() if self.execution_time else None))
             for _ in range(self.options.generate()):
                 print("Generating option")
-                opt = sp.addOption(Option(sp))
 
-                app_du = apps.pop(Random.randint(0, len(apps)))
+                notFound = True
 
-                containers = container_meta.loc[container_meta[3] == app_du]
+                while (notFound):
+                    opt = sp.addOption(Option(sp))
 
-                containers_ids = list(containers.loc[:,0].unique())
+                    app_du = apps.pop(Random.randint(0, len(apps)))
 
-                #rjob = random_job.random_job()
-                bw = 0
-                for container in containers_ids:
-                    print("Inserting container")
-                    #ctmp = containers.loc[containers[0] == container].head(1)
-                    ctmp2 = container_usage[container_usage[0] == container]
+                    containers = container_meta.loc[container_meta[3] == app_du]
 
-                    opt.addContainer(Container(int(ctmp2[3].mean()), int(ctmp2[4].mean())))
-                        #int(ctmp[5]),
-                        #int(ctmp[7])))
-                    bw += ctmp2[8].mean() + ctmp2[9].mean()
-                opt.setBandwidthSaving(bw)
+                    containers_ids = list(containers.loc[:,0].unique())
+
+                    #rjob = random_job.random_job()
+                    bw = 0
+                    for container in containers_ids:
+                        print("Inserting container")
+                        #ctmp = containers.loc[containers[0] == container].head(1)
+                        ctmp2 = container_usage[container_usage[0] == container]
+                        if len(ctmp2) == 0:
+                            continue
+                        notFound = False
+                        opt.addContainer(Container(int(ctmp2[3].mean()), int(ctmp2[4].mean())))
+                            #int(ctmp[5]),
+                            #int(ctmp[7])))
+                        bw += ctmp2[8].mean() + ctmp2[9].mean()
+                    opt.setBandwidthSaving(bw)
 
         avgZ = 0
         for sp in np.getServiceProviders():
