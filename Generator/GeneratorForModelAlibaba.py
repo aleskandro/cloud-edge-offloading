@@ -6,6 +6,7 @@ from Model.ServiceProvider import  *
 from Generator.Generator import *
 import pandas as pd
 import random_job
+import numpy.random as Random
 
 
 class GeneratorForModelGoogle(Generator):
@@ -60,16 +61,34 @@ class GeneratorForModelGoogle(Generator):
         #while(self._K * np.getTotalResources()[0] > np.getSumAverageRequiredResources()[0] or
         # while k_ram < 1.8 || k_cpu < 1.8
         # k_ram = k_cpu
+
+        container_meta = pd.read_csv("datasets-alibaba/container_meta.csv", header=None)
+        container_usage = pd.read_csv("datasets-alibaba/container_usage_5mins.csv", header=None)
+
+        apps = list(container_meta.loc[:,3].unique())
+
+
         for _ in range(self.serviceProviders.generate()):
         #    self._K * np.getTotalResources()[1] > np.getSumAverageRequiredResources()[1]):
             sp = np.addServiceProvider(ServiceProvider(self.execution_time.generate() if self.execution_time else None))
             for _ in range(self.options.generate()):
                 opt = sp.addOption(Option(sp))
-                rjob = random_job.random_job()
-                for count, task in enumerate(rjob.itertuples()):
-                    opt.addContainer(Container(task.CPU, task.memory))
-                resources = opt.getTotalResources()
-                opt.setBandwidthSaving(self.bandwidth.generate(resources, totalResources))
+
+                app_du = apps.pop(Random.randint(0, len(apps)))
+
+                containers = container_meta.loc[container_meta[3] == app_du]
+
+                containers_ids = list(containers.loc[:,0].unique())
+
+                #rjob = random_job.random_job()
+                bw = 0
+                for container in containers_ids:
+                    ctmp = containers.loc[containers[0] == container].head(1)
+                    opt.addContainer(Container(
+                        int(ctmp[5]),
+                        int(ctmp[7])))
+                    bw += container_usage[container_usage[0] == container][8].mean() + container_usage[container_usage[0] == container][9].mean()
+                opt.setBandwidthSaving(bw)
 
         avgZ = 0
         for sp in np.getServiceProviders():
