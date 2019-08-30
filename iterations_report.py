@@ -3,6 +3,7 @@ import numpy.random as Random
 from Model.NetworkProvider import NetworkProvider
 from Generator.GeneratorForModel import GeneratorForModel
 from Generator.GeneratorForModelGoogle import GeneratorForModelGoogle
+from Generator.GeneratorForModelAlibaba import GeneratorForModelAlibaba
 import pandas as pd
 import glob
 import matplotlib.pyplot as plt
@@ -13,10 +14,10 @@ plt.rcParams.update({'font.size': 12.5, 'font.family': 'serif'})
 def iterations_report(simulate, get_best_host=NetworkProvider().getInstance().getBestHost,
                       filename="iterations_report_max.csv"):
     Random.seed(2)
-    cmpilph.generate_input_datas(K=2, avgCpu=1, avgRam=1)
-    generator = GeneratorForModelGoogle(cmpilph.servers, cmpilph.serviceProviders,
+    cmpilph.generate_input_datas(K=2, avgCpu=800, avgRam=100)
+    generator = GeneratorForModelAlibaba(cmpilph.servers, cmpilph.serviceProviders,
                                   cmpilph.options, cmpilph.containers, [cmpilph.cpu, cmpilph.ram], cmpilph.bandwidth, [cmpilph.cpuReq, cmpilph.ramReq])
-    generator.generate(service_providers=simulate)  # TODO make multithread by not using a singleton (can I?)
+    generator.generate()  # TODO make multithread by not using a singleton (can I?)
     npp = NetworkProvider().getInstance()
     if not simulate:
         return

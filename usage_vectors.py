@@ -3,6 +3,7 @@ import numpy.random as Random
 from Model.NetworkProvider import NetworkProvider
 from Generator.GeneratorForModel import GeneratorForModel
 from Generator.GeneratorForModelGoogle import GeneratorForModelGoogle
+from Generator.GeneratorForModelAlibaba import GeneratorForModelAlibaba
 import pandas as pd
 import glob
 import matplotlib.pyplot as plt
@@ -11,8 +12,8 @@ plt.rcParams.update({'font.size': 12.5, 'font.family': 'serif'})
 
 def usage_vectors(simulate, naive=False, get_best_host=NetworkProvider().getInstance().getBestHost, filename="usage_vectors.csv"):
     Random.seed(2)
-    cmpilph.generate_input_datas(K=2, avgCpu=1, avgRam=1)
-    generator = GeneratorForModelGoogle(cmpilph.servers, cmpilph.serviceProviders,
+    cmpilph.generate_input_datas(K=2, avgCpu=800, avgRam=100)
+    generator = GeneratorForModelAlibaba(cmpilph.servers, cmpilph.serviceProviders,
                                   cmpilph.options, cmpilph.containers, [cmpilph.cpu, cmpilph.ram], cmpilph.bandwidth, [cmpilph.cpuReq, cmpilph.ramReq])
     generator.generate()  # TODO make multithread by not using a singleton (can I?)
     npp = NetworkProvider().getInstance()

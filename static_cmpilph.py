@@ -6,6 +6,7 @@ import time
 import glob
 from cycler import cycler
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 from Generator.GeneratorBwConcave import *
 from Generator.GeneratorForModel import *
@@ -17,6 +18,7 @@ from Random.ResourceDependentRandomVariable import *
 maxxCpu = 30
 maxxRam = 30000
 plt.rcParams.update({'font.size': 13, 'font.family': 'serif'})
+mpl.rc('hatch', color='k', linewidth=1)
 def confidence_interval(x):
     return 1.96 * x.std() / math.sqrt(x.count())
 
@@ -137,10 +139,13 @@ def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
     fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(10,12))
 
     fig.subplots_adjust(hspace=0.25)
-    #monochrome = (cycler('color', ['k']) * cycler('linestyle', ['-', '--', ':']) * cycler('marker',['^', ',', '.']))
+    monochrome = (cycler('color', ['#000000', "#888888", "#cccccc"]) * cycler('linestyle', ['-']) * cycler('marker',[',']))
+    print(monochrome)
+    patterns = ["|", "\\", "/", "-", ".", "*", "x", "o", "O"]
     #for ax in axs:
     #    ax.set_prop_cycle(monochrome)
-
+    axs[0].set_prop_cycle(monochrome)
+    axs[2].set_prop_cycle(monochrome)
     ax = axs[0]
     max_y = 0
     ax.set_ylim([0, max_y])
@@ -161,6 +166,7 @@ def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
     max_y = 30
     ax.set_ylabel("Available resources after placement (%)")
     start = -5
+    i = 0
     for label, regex in [("Optimal", "*-rrOptsILP.csv"), ("EdgeMORE", "*-rrOptsH.csv"), ("Naive", "*-rrOptsN.csv")]:
         for file in glob.glob("results/" + filename + regex):
             rrOpts = pd.read_csv(file)
@@ -170,21 +176,22 @@ def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
             if log:
                 ax.bar(rrOpts.index.values + start*width*np.array(rrOpts.index.values)/12, rrOpts["CPU"]["mean"]*100, width*np.array(rrOpts.index.values)/6,
                             yerr=rrOpts["CPU"]["confidence_interval"]*100,
-                            label="CPU (%s)" % label, align="edge")
+                            label="CPU (%s)" % label, align="edge", color='white', edgecolor='black', hatch=patterns[i])
                 start += 2
                 ax.bar(rrOpts.index.values + start*width*np.array(rrOpts.index.values)/12, rrOpts["RAM"]["mean"]*100, width*np.array(rrOpts.index.values)/6,
                             yerr=rrOpts["RAM"]["confidence_interval"]*100,
-                            label="RAM (%s)" % label, align="edge")
+                            label="RAM (%s)" % label, align="edge", color='white', edgecolor='black', hatch=patterns[i+1])
                 start += 2
             else:
                 ax.bar(rrOpts.index.values + start*width/12, rrOpts["CPU"]["mean"]*100, width/6,
                             yerr=rrOpts["CPU"]["confidence_interval"]*100,
-                            label="CPU (%s)" % label, align="edge")
+                            label="CPU (%s)" % label, align="edge", color='white', edgecolor='black', hatch=patterns[i])
                 start += 2
                 ax.bar(rrOpts.index.values + start*width/12, rrOpts["RAM"]["mean"]*100, width/6,
                             yerr=rrOpts["RAM"]["confidence_interval"]*100,
-                            label="RAM (%s)" % label, align="edge")
+                            label="RAM (%s)" % label, align="edge", color='white', edgecolor='black', hatch=patterns[i+1])
                 start += 2
+            i += 2
     ax.set_ylim([0, max_y])
 
 
@@ -208,7 +215,7 @@ def make_graph_from_file(filename, group_key, xlabel, log=True, width=0.5):
         ax.grid(axis="y")
 
 
-    fig.savefig("results/%s.eps" % filename, dpi=500)
+    fig.savefig("results/%s.pdf" % filename, dpi=500)
 
 
 if __name__ == "__main__":

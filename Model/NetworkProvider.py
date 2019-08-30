@@ -197,6 +197,8 @@ class NetworkProvider:
                                    h_cpu * (self.getTotalResources()[0] - old_option.getResourcesIncreasing()[0]) +
                                    h_ram * (self.getTotalResources()[1] - old_option.getResourcesIncreasing()[1])
                             )
+                        if utility_expected < 0:
+                            print("ALERT! negative utility expected")
                         utility_expected += self.getBandwidthSaving()
                         if utility_expected > len(self.__serviceProviders):
                             utility_expected = len(self.__serviceProviders)
@@ -309,6 +311,7 @@ class NetworkProvider:
                 t = (0, 0)
                 for opt in sp.getOptions():
                     t = tuple(map(operator.add, t, (opt.getCpuReq(), opt.getRamReq())))
+                    t = tuple(map(operator.truediv(t, (len(opt.getContainers()), len(opt.getContainers())))))
                 t = tuple(map(operator.truediv, t, (len(sp.getOptions()), len(sp.getOptions()))))
                 ret = tuple(map(operator.add, ret, t))
             return tuple(map(operator.truediv, ret, (len(self.__serviceProviders), len(self.__serviceProviders))))
