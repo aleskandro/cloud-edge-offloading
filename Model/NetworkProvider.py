@@ -151,6 +151,7 @@ class NetworkProvider:
                      for container in candidateOption.getServiceProvider().getDefaultOption().getContainers():
                          #if container.getServer():
                          container.getServer().unplaceContainer(container)
+
                 # Try to place new option on the cluster
                 for container in candidateOption.getContainers():
                     host = None
@@ -163,6 +164,7 @@ class NetworkProvider:
                     else:
                         placement = False
                 # Discard the request if any container was not placed in the cluster
+
                 if not placement:
                     for container in candidateOption.getContainers():
                         if container.getServer():
@@ -201,9 +203,12 @@ class NetworkProvider:
                         if utility_expected < 0:
                             print("ALERT! negative utility expected")
                         utility_expected += self.getBandwidthSaving()
+                        utility_expected = min(utility_expected, float(iterations_report.tail(1)["ExpectedUtility"]))
+
                         #if utility_expected > len(self.__serviceProviders):
                         #    utility_expected = len(self.__serviceProviders)
-                    old_option = candidateOption
+                    if placement:
+                        old_option = candidateOption
                     new_row = {"Iteration": iteration, "Utility": self.getBandwidthSaving(),
                                "ExpectedUtility": utility_expected, "BestJumpEfficiency": candidateOption.getEfficiency()}
                     for index, server in enumerate(self.getServers()):
