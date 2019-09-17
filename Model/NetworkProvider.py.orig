@@ -203,9 +203,11 @@ class NetworkProvider:
                         if utility_expected < 0:
                             print("ALERT! negative utility expected")
                         utility_expected += self.getBandwidthSaving()
-                        old_utility = float(iterations_report.tail(1)["ExpectedUtility"])
-                        if old_utility > 0:
-                            utility_expected = min(utility_expected, float(iterations_report.tail(1)["ExpectedUtility"]))
+                        utility_expected = min(utility_expected, float(iterations_report.tail(1)["ExpectedUtility"]))
+<<<<<<< HEAD
+
+=======
+>>>>>>> b821ddcfff6e17bc4e1e2ce6f35f7729faa3cfb2
                         #if utility_expected > len(self.__serviceProviders):
                         #    utility_expected = len(self.__serviceProviders)
                     if placement:
