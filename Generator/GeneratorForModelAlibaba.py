@@ -90,14 +90,14 @@ class GeneratorForModelAlibaba(Generator):
                     bw = 0
                     for container in containers_ids:
                         print("Inserting container")
-                        #ctmp = containers.loc[containers[0] == container].head(1)
+                        ctmp = containers.loc[containers[0] == container].head(1)
                         ctmp2 = container_usage[container_usage[0] == container]
                         if len(ctmp2) == 0:
                             continue
                         notFound = False
-                        opt.addContainer(Container(int(ctmp2[3].mean()), int(ctmp2[4].mean())))
-                            #int(ctmp[5]),
-                            #int(ctmp[7])))
+                        opt.addContainer(Container(#int(ctmp2[3].mean()), int(ctmp2[4].mean())))
+                            int(ctmp[5]),
+                            int(ctmp[7])))
                         bw += ctmp2[8].mean() + ctmp2[9].mean()
                     opt.setBandwidthSaving(bw)
 

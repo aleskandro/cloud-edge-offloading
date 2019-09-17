@@ -114,7 +114,8 @@ class NetworkProvider:
                 h_ram += server.getTotalRam()
             h_cpu = 1/h_cpu
             h_ram = 1/h_ram
-            return h_cpu, h_ram
+            #return h_cpu, h_ram
+            return 5, 1
 
         def makePlacement(self, placement_id, time=0, options_slice=None, get_best_host=None, collect_iterations_report=False):
             iterations_report = pd.DataFrame(columns=["Iteration", "Utility", "ExpectedUtility", "BestJumpEfficiency"])
@@ -200,8 +201,8 @@ class NetworkProvider:
                         if utility_expected < 0:
                             print("ALERT! negative utility expected")
                         utility_expected += self.getBandwidthSaving()
-                        if utility_expected > len(self.__serviceProviders):
-                            utility_expected = len(self.__serviceProviders)
+                        #if utility_expected > len(self.__serviceProviders):
+                        #    utility_expected = len(self.__serviceProviders)
                     old_option = candidateOption
                     new_row = {"Iteration": iteration, "Utility": self.getBandwidthSaving(),
                                "ExpectedUtility": utility_expected, "BestJumpEfficiency": candidateOption.getEfficiency()}

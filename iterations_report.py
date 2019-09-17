@@ -14,7 +14,7 @@ plt.rcParams.update({'font.size': 12.5, 'font.family': 'serif'})
 def iterations_report(simulate, get_best_host=NetworkProvider().getInstance().getBestHost,
                       filename="iterations_report_max.csv"):
     Random.seed(2)
-    cmpilph.generate_input_datas(K=2, avgCpu=800, avgRam=100)
+    cmpilph.generate_input_datas(K=2, avgCpu=9600, avgRam=100, avgServiceProviders=20)
     generator = GeneratorForModelAlibaba(cmpilph.servers, cmpilph.serviceProviders,
                                   cmpilph.options, cmpilph.containers, [cmpilph.cpu, cmpilph.ram], cmpilph.bandwidth, [cmpilph.cpuReq, cmpilph.ramReq])
     generator.generate()  # TODO make multithread by not using a singleton (can I?)
