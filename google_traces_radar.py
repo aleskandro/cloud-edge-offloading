@@ -3,6 +3,7 @@ import time
 import numpy as np
 
 from Generator.GeneratorForModelGoogle import *
+from Generator.GeneratorForModelAlibaba import *
 from Generator.GeneratorForModel import *
 from Random.NormalRandomVariable import *
 from Random.UniformRandomVariable import *
@@ -46,7 +47,7 @@ def simpleHeuristic(maxOpt, make_graph=True):
     options = UniformRandomVariable(10, 10)
     for i in range(1, maxOpt + 1):
         serviceProviders = UniformRandomVariable(i, i)
-        generator = GeneratorForModelGoogle(servers, serviceProviders,
+        generator = GeneratorForModelAlibaba(servers, serviceProviders,
                                             options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq], K=1)
         generator.generate()  # TODO make multithread by not using a singleton (can I?)
         npp = NetworkProvider().getInstance()
@@ -62,7 +63,7 @@ def simpleHeuristic(maxOpt, make_graph=True):
 
 def make_datas_var_options_var_sps_raw(maxSPs=160, maxOpts=8, max_runs=20, filename="results/radar_plot_raw.csv"):
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
-    generate_input_datas()
+    generate_input_datas(avgCpu=9600, avgRam=100)
     npp = NetworkProvider().getInstance()
     df = pd.DataFrame(columns=["options", "service_providers", "utility", "K", "remaining_cpu", "remaining_ram", "time_elapsed"])
     for i in range(max_runs):
@@ -74,7 +75,7 @@ def make_datas_var_options_var_sps_raw(maxSPs=160, maxOpts=8, max_runs=20, filen
 
             while k <= maxOpts:
                 options = UniformRandomVariable(k, k)
-                generator = GeneratorForModelGoogle(servers, serviceProviders,
+                generator = GeneratorForModelAlibaba(servers, serviceProviders,
                                             options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq], K=1)
                 generator.generate()  # TODO make multithread by not using a singleton (can I?)
                 #generator.save_to_csv(i)
@@ -96,7 +97,7 @@ def make_datas_var_options_var_sps_raw(maxSPs=160, maxOpts=8, max_runs=20, filen
 
 def make_datas_var_options_var_sps(maxSPs=160, maxOpts=8, ret_func=NetworkProvider().getInstance().getBandwidthSaving, filename="results/radar_plot.csv"):
     global servers, ram, cpu, serviceProviders, bandwidth, containers, ramReq, cpuReq
-    generate_input_datas()
+    generate_input_datas(avgCpu=9600, avgRam=100)
     npp = NetworkProvider().getInstance()
     serviceProvidersNb = []
     i = 10
@@ -124,7 +125,7 @@ def make_datas_var_options_var_sps(maxSPs=160, maxOpts=8, ret_func=NetworkProvid
         serviceProviders = UniformRandomVariable(sps, sps)
         for opts in optionsNb:
             options = UniformRandomVariable(opts, opts)
-            generator = GeneratorForModelGoogle(servers, serviceProviders,
+            generator = GeneratorForModelAlibaba(servers, serviceProviders,
                                             options, containers, [cpu, ram], bandwidth, [cpuReq, ramReq], K=1)
             generator.generate()  # TODO make multithread by not using a singleton (can I?)
             npp.makePlacement(1)
