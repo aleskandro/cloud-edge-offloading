@@ -70,6 +70,12 @@ class NetworkProvider:
                 ret += sp.getDefaultOption().getBandwidthSaving() if sp.getDefaultOption() else 0
             return ret
 
+        def getvBandwidthSaving(self):
+            ret = 0
+            for sp in self.__serviceProviders:
+                ret += sp.getvDefaultOption().getBandwidthSaving() if sp.getvDefaultOption() else 0
+            return ret
+
         def getRelativeBandwidthSaving(self):
             ret = self.getBandwidthSaving()
             max_bs = 0
@@ -114,11 +120,18 @@ class NetworkProvider:
                 h_ram += server.getTotalRam()
             h_cpu = 1/h_cpu
             h_ram = 1/h_ram
-            #return h_cpu, h_ram
-            return 5, 1
+            return h_cpu, h_ram
+            #return 5, 1
 
         def makePlacement(self, placement_id, time=0, options_slice=None, get_best_host=None, collect_iterations_report=False):
-            iterations_report = pd.DataFrame(columns=["Iteration", "Utility", "ExpectedUtility", "BestJumpEfficiency"])
+            iterations_report = pd.DataFrame(columns=["Iteration", "Utility", "ExpectedUtility", "BestJumpEfficiency", "UpperBoundOptimalUtility"])
+
+            vcram = 0
+            vccpu = 0
+            h_cpu, h_ram = self.get_h_l()
+            ctot = h_cpu * self.getTotalResources()[0] + h_ram * self.getTotalResources()[1]
+            virtual = True
+
             fitting = True
             if time == 0:
                 self.__clean_cluster() # Clean the cluster at time 0 or for a non time-batched execution
@@ -142,6 +155,19 @@ class NetworkProvider:
                 if len(options) == 0:
                     break
                 candidateOption = max(options, key=lambda x: x.getEfficiency())
+
+                if (virtual):
+                    oldvcram = candidateOption.getServiceProvider().getvDefaultOption().getRamReq() if \
+                        candidateOption.getServiceProvider().getvDefaultOption() else 0
+                    oldvccpu = candidateOption.getServiceProvider().getvDefaultOption().getCpuReq() if \
+                        candidateOption.getServiceProvider().getvDefaultOption() else 0
+                    vcram = vcram - oldvcram + candidateOption.getRamReq()
+                    vccpu = vccpu - oldvccpu + candidateOption.getCpuReq()
+                    candidateOption.getServiceProvider().setvDefaultOption(candidateOption)
+
+                    vcocc = ctot - h_ram*vcram - h_cpu*vccpu
+                    virtual = vcocc > 0
+
                 # Unplace old containers if options for the selected sp has changed
                 #option_has_changed = candidateOption.getServiceProvider().getDefaultOption() != candidateOption
                 placement = True
@@ -190,7 +216,6 @@ class NetworkProvider:
 
                 if collect_iterations_report:
 
-                    h_cpu, h_ram = self.get_h_l()
                     utility_expected = 0
                     if old_option is not None:
                         utility_expected = old_option.getEfficiency() * \
@@ -206,7 +231,8 @@ class NetworkProvider:
                         #    utility_expected = len(self.__serviceProviders)
                     old_option = candidateOption
                     new_row = {"Iteration": iteration, "Utility": self.getBandwidthSaving(),
-                               "ExpectedUtility": utility_expected, "BestJumpEfficiency": candidateOption.getEfficiency()}
+                               "ExpectedUtility": utility_expected, "BestJumpEfficiency": candidateOption.getEfficiency(),
+                               "UpperBoundOptimalUtility": self.getvBandwidthSaving()}
                     for index, server in enumerate(self.getServers()):
                         new_row["%d_CPU" % index] = (server.getTotalCpu() - server.getAvailableCpu()) \
                                                     / server.getTotalCpu()

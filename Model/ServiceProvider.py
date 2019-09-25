@@ -4,6 +4,7 @@ class ServiceProvider:
     def __init__(self, execution_time=None):
         self.__options = []
         self.__defaultOption = None
+        self.__vdefaultOption = None
         self.__start_time = None
         self.__execution_time = execution_time
 
@@ -31,6 +32,12 @@ class ServiceProvider:
 
     def setDefaultOption(self, option):
         self.__defaultOption = option
+
+    def getvDefaultOption(self):
+        return self.__vdefaultOption
+
+    def setvDefaultOption(self, option):
+        self.__vdefaultOption = option
 
     def getMostEfficientOption(self):
         mostEfficientOption = self.__defaultOption
